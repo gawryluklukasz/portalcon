@@ -659,7 +659,10 @@ function renderMenuGrid(gridElement, items, cartArray, toggleFunction) {
         const categoryEmoji = item.category === 'food' ? '🍽️' : '🥤';
         const categoryText = item.category === 'food' ? 'Jedzenie' : 'Napój';
         
-        if (item.available) {
+        const isKitchenClosedForFood = !kitchenOpen && item.category === 'food';
+        const isAvailable = item.available && !isKitchenClosedForFood;
+        
+        if (isAvailable) {
             itemDiv.onclick = () => toggleFunction(item);
             itemDiv.innerHTML = `
                 <div class="category">${categoryEmoji} ${categoryText}</div>
@@ -673,10 +676,16 @@ function renderMenuGrid(gridElement, items, cartArray, toggleFunction) {
         } else {
             itemDiv.style.opacity = '0.5';
             itemDiv.style.cursor = 'not-allowed';
+            
+            let unavailableText = 'BRAK';
+            if (isKitchenClosedForFood) {
+                unavailableText = 'KUCHNIA ZAMKNIĘTA';
+            }
+            
             itemDiv.innerHTML = `
                 <div class="category">${categoryEmoji} ${categoryText}</div>
                 <h3>${item.name}</h3>
-                <div class="price" style="color: #ef4444; font-weight: bold;">BRAK</div>
+                <div class="price" style="color: #ef4444; font-weight: bold;">${unavailableText}</div>
             `;
         }
         
