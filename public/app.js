@@ -8,6 +8,8 @@ let cart = [];
 let adminCart = [];
 let isRegisterMode = false;
 let currentAdminPanel = 'customer';
+let kitchenOpen = true;
+let kitchenStatusUnsubscribe = null;
 
 // ============================================
 // MENU DATA
@@ -47,10 +49,105 @@ document.addEventListener('DOMContentLoaded', () => {
             db = firebase.firestore();
             console.log('Firestore initialized');
             initializeMenu();
+            initKitchenStatus();
             initAuth();
         }
     }, 100);
 });
+
+// ============================================
+// KITCHEN STATUS MANAGEMENT
+// ============================================
+async function initKitchenStatus() {
+    console.log('Initializing kitchen status...');
+    
+    try {
+        const settingsRef = db.collection('settings').doc('kitchen');
+        const settingsDoc = await settingsRef.get();
+        
+        if (!settingsDoc.exists) {
+            console.log('Creating initial kitchen settings...');
+            await settingsRef.set({
+                open: true,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        kitchenStatusUnsubscribe = settingsRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                kitchenOpen = doc.data().open;
+                console.log('Kitchen status updated:', kitchenOpen ? 'OPEN' : 'CLOSED');
+                updateKitchenStatusUI();
+                
+                if (currentUser) {
+                    if (userRole === 'admin') {
+                        if (currentAdminPanel === 'customer') {
+                            renderAdminMenu();
+                        }
+                    } else if (userRole === 'customer') {
+                        renderMenu();
+                    }
+                }
+            }
+        }, (error) => {
+            console.error('Error listening to kitchen status:', error);
+        });
+    } catch (error) {
+        console.error('Error initializing kitchen status:', error);
+    }
+}
+
+async function toggleKitchenStatus() {
+    try {
+        await db.collection('settings').doc('kitchen').update({
+            open: !kitchenOpen,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('Error toggling kitchen status:', error);
+        alert('Błąd zmiany statusu kuchni: ' + error.message);
+    }
+}
+
+function updateKitchenStatusUI() {
+    const statusBtn = document.getElementById('kitchenStatusBtn');
+    const statusText = document.getElementById('kitchenStatusText');
+    
+    if (!statusBtn || !statusText) return;
+    
+    if (kitchenOpen) {
+        statusText.textContent = '🟢 Otwarta';
+        statusBtn.style.background = '#10b981';
+        statusBtn.style.color = 'white';
+    } else {
+        statusText.textContent = '🔴 Zamknięta';
+        statusBtn.style.background = '#ef4444';
+        statusBtn.style.color = 'white';
+    }
+    
+    updateKitchenStatusMessage();
+}
+
+function updateKitchenStatusMessage() {
+    const menuTab = document.getElementById('menuTab');
+    if (!menuTab) return;
+    
+    let existingMessage = document.getElementById('kitchenClosedMessage');
+    
+    if (!kitchenOpen) {
+        if (!existingMessage) {
+            existingMessage = document.createElement('div');
+            existingMessage.id = 'kitchenClosedMessage';
+            existingMessage.style.cssText = 'background: #fee2e2; border: 2px solid #ef4444; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: center; font-weight: bold;';
+            existingMessage.innerHTML = '🔴 Kuchnia jest obecnie zamknięta. Zamówienia są tymczasowo niedostępne.';
+            menuTab.insertBefore(existingMessage, menuTab.firstChild);
+        }
+    } else {
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+    }
+}
 
 // ============================================
 // MENU MANAGEMENT
@@ -710,6 +807,11 @@ function updateAdminCart() {
 }
 
 async function placeOrderAsAdmin() {
+    if (!kitchenOpen) {
+        alert('🔴 Kuchnia jest obecnie zamknięta. Zamówienia są niedostępne.');
+        return;
+    }
+    
     const tableNumber = document.getElementById('adminTableNumber').value;
     
     if (!tableNumber) {
@@ -806,6 +908,7 @@ function setupCustomerView() {
     updateCart();
     restoreLastTableNumber('tableNumber');
     showCustomerTab('menu');
+    updateKitchenStatusMessage();
 }
 
 function showCustomerTab(tab) {
@@ -893,6 +996,11 @@ function updateCart() {
 }
 
 async function placeOrder() {
+    if (!kitchenOpen) {
+        alert('🔴 Kuchnia jest obecnie zamknięta. Zamówienia są niedostępne.');
+        return;
+    }
+    
     const tableNumber = document.getElementById('tableNumber').value;
     
     if (!tableNumber) {

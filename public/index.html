@@ -477,10 +477,18 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-          <button class="btn btn-primary" onclick="switchAdminPanel('customer')" id="adminCustomerBtn" style="width: auto; padding: 12px 24px; background: #667eea;">🍽️ Panel Klienta</button>
-          <button class="btn" onclick="switchAdminPanel('waiter')" id="adminWaiterBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">👨‍🍳 Panel Kelnera</button>
-          <button class="btn" onclick="switchAdminPanel('menu')" id="adminMenuBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📋 Zarządzanie Menu</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-primary" onclick="switchAdminPanel('customer')" id="adminCustomerBtn" style="width: auto; padding: 12px 24px; background: #667eea;">🍽️ Panel Klienta</button>
+            <button class="btn" onclick="switchAdminPanel('waiter')" id="adminWaiterBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">👨‍🍳 Panel Kelnera</button>
+            <button class="btn" onclick="switchAdminPanel('menu')" id="adminMenuBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📋 Zarządzanie Menu</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-weight: 600; color: #333;">Status Kuchni:</span>
+            <button id="kitchenStatusBtn" onclick="toggleKitchenStatus()" class="btn" style="width: auto; padding: 12px 24px; font-weight: bold;">
+              <span id="kitchenStatusText">🟢 Otwarta</span>
+            </button>
+          </div>
         </div>
 
         <div id="adminCustomerPanel" class="admin-panel">
