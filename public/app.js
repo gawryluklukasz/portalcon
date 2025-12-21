@@ -279,9 +279,24 @@ function loadCustomerOrders() {
         .where('userId', '==', currentUser.uid)
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
+            console.log('Customer orders loaded:', snapshot.docs.length);
             renderCustomerOrders(snapshot.docs);
         }, (error) => {
             console.error('Error loading customer orders:', error);
+            if (error.code === 'failed-precondition' || error.message.includes('index')) {
+                console.warn('Missing index, loading without sorting...');
+                db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .onSnapshot((snapshot) => {
+                        const docs = snapshot.docs.sort((a, b) => {
+                            const aTime = a.data().createdAt?.seconds || 0;
+                            const bTime = b.data().createdAt?.seconds || 0;
+                            return bTime - aTime;
+                        });
+                        console.log('Customer orders loaded (manual sort):', docs.length);
+                        renderCustomerOrders(docs);
+                    });
+            }
         });
 }
 
