@@ -2,7 +2,9 @@ let db;
 let currentUser = null;
 let userRole = null;
 let cart = [];
+let adminCart = [];
 let isRegisterMode = false;
+let currentAdminPanel = 'customer';
 
 const menuItems = [
     { id: 1, name: 'Pizza Margherita', category: 'food', price: 25 },
@@ -77,7 +79,10 @@ async function checkAndSetUserRole(user) {
 }
 
 function showViewBasedOnRole() {
-    if (userRole === 'waiter') {
+    if (userRole === 'admin') {
+        setupAdminView();
+        showView('adminView');
+    } else if (userRole === 'waiter') {
         setupWaiterView();
         showView('waiterView');
     } else {
@@ -233,11 +238,342 @@ function logout() {
             currentUser = null;
             userRole = null;
             cart = [];
+            adminCart = [];
+            currentAdminPanel = 'customer';
             showView('loginView');
         })
         .catch((error) => {
             console.error('Logout error:', error);
         });
+}
+
+function setupAdminView() {
+    document.getElementById('adminName').textContent = currentUser.displayName;
+    document.getElementById('adminAvatar').src = currentUser.photoURL;
+    
+    switchAdminPanel('customer');
+}
+
+function switchAdminPanel(panel) {
+    currentAdminPanel = panel;
+    const customerPanel = document.getElementById('adminCustomerPanel');
+    const waiterPanel = document.getElementById('adminWaiterPanel');
+    const customerBtn = document.getElementById('adminCustomerBtn');
+    const waiterBtn = document.getElementById('adminWaiterBtn');
+    
+    if (panel === 'customer') {
+        customerPanel.style.display = 'block';
+        waiterPanel.style.display = 'none';
+        customerBtn.style.background = '#667eea';
+        customerBtn.style.color = 'white';
+        waiterBtn.style.background = '#e5e7eb';
+        waiterBtn.style.color = '#333';
+        
+        renderAdminMenu();
+        updateAdminCart();
+        showAdminCustomerTab('menu');
+    } else {
+        customerPanel.style.display = 'none';
+        waiterPanel.style.display = 'block';
+        customerBtn.style.background = '#e5e7eb';
+        customerBtn.style.color = '#333';
+        waiterBtn.style.background = '#667eea';
+        waiterBtn.style.color = 'white';
+        
+        loadAdminWaiterOrders();
+    }
+}
+
+function showAdminCustomerTab(tab) {
+    const menuTab = document.getElementById('adminMenuTab');
+    const ordersTab = document.getElementById('adminOrdersTab');
+    const menuBtn = document.getElementById('adminMenuTabBtn');
+    const ordersBtn = document.getElementById('adminOrdersTabBtn');
+    
+    if (tab === 'menu') {
+        menuTab.style.display = 'block';
+        ordersTab.style.display = 'none';
+        menuBtn.style.background = '#667eea';
+        menuBtn.style.color = 'white';
+        ordersBtn.style.background = '#e5e7eb';
+        ordersBtn.style.color = '#333';
+    } else {
+        menuTab.style.display = 'none';
+        ordersTab.style.display = 'block';
+        menuBtn.style.background = '#e5e7eb';
+        menuBtn.style.color = '#333';
+        ordersBtn.style.background = '#667eea';
+        ordersBtn.style.color = 'white';
+        loadAdminCustomerOrders();
+    }
+}
+
+function renderAdminMenu() {
+    const menuGrid = document.getElementById('adminMenuGrid');
+    menuGrid.innerHTML = '';
+    
+    menuItems.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'menu-item';
+        itemDiv.onclick = () => toggleAdminMenuItem(item);
+        
+        const categoryEmoji = item.category === 'food' ? '🍽️' : '🥤';
+        const categoryText = item.category === 'food' ? 'Jedzenie' : 'Napój';
+        
+        itemDiv.innerHTML = `
+            <div class="category">${categoryEmoji} ${categoryText}</div>
+            <h3>${item.name}</h3>
+            <div class="price">${item.price} zł</div>
+        `;
+        
+        menuGrid.appendChild(itemDiv);
+    });
+}
+
+function toggleAdminMenuItem(item) {
+    const index = adminCart.findIndex(cartItem => cartItem.id === item.id);
+    
+    if (index > -1) {
+        adminCart.splice(index, 1);
+    } else {
+        adminCart.push({ ...item });
+    }
+    
+    updateAdminCart();
+    updateAdminMenuSelection();
+}
+
+function updateAdminMenuSelection() {
+    const menuItemElements = document.querySelectorAll('#adminMenuGrid .menu-item');
+    menuItemElements.forEach((element, index) => {
+        const item = menuItems[index];
+        const isSelected = adminCart.some(cartItem => cartItem.id === item.id);
+        
+        if (isSelected) {
+            element.classList.add('selected');
+        } else {
+            element.classList.remove('selected');
+        }
+    });
+}
+
+function updateAdminCart() {
+    const cartItems = document.getElementById('adminCartItems');
+    const orderForm = document.getElementById('adminOrderForm');
+    
+    if (adminCart.length === 0) {
+        cartItems.innerHTML = '<div class="cart-empty">Koszyk jest pusty. Wybierz pozycje z menu.</div>';
+        orderForm.style.display = 'none';
+    } else {
+        let html = '';
+        let total = 0;
+        
+        adminCart.forEach(item => {
+            html += `
+                <div class="cart-item">
+                    <span>${item.name}</span>
+                    <span>${item.price} zł</span>
+                </div>
+            `;
+            total += item.price;
+        });
+        
+        html += `
+            <div class="cart-item" style="font-weight: 700; border-top: 2px solid #333; margin-top: 8px; padding-top: 16px;">
+                <span>Razem:</span>
+                <span>${total} zł</span>
+            </div>
+        `;
+        
+        cartItems.innerHTML = html;
+        orderForm.style.display = 'block';
+    }
+}
+
+async function placeOrderAsAdmin() {
+    const tableNumber = document.getElementById('adminTableNumber').value;
+    
+    if (!tableNumber) {
+        alert('Wybierz numer stolika!');
+        return;
+    }
+    
+    if (adminCart.length === 0) {
+        alert('Koszyk jest pusty!');
+        return;
+    }
+    
+    try {
+        const total = adminCart.reduce((sum, item) => sum + item.price, 0);
+        
+        await db.collection('orders').add({
+            userId: currentUser.uid,
+            userName: currentUser.displayName,
+            userEmail: currentUser.email,
+            tableNumber: parseInt(tableNumber),
+            items: adminCart,
+            total: total,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert('Zamówienie zostało złożone! ✅');
+        
+        adminCart = [];
+        document.getElementById('adminTableNumber').value = '';
+        updateAdminCart();
+        updateAdminMenuSelection();
+        
+        showAdminCustomerTab('orders');
+    } catch (error) {
+        console.error('Error placing order:', error);
+        alert('Błąd składania zamówienia: ' + error.message);
+    }
+}
+
+function loadAdminCustomerOrders() {
+    console.log('Loading admin customer orders for:', currentUser.uid);
+    db.collection('orders')
+        .where('userId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            console.log('Admin customer orders loaded:', snapshot.docs.length);
+            renderAdminCustomerOrders(snapshot.docs);
+        }, (error) => {
+            console.error('Error loading admin customer orders:', error);
+            if (error.code === 'failed-precondition' || error.message.includes('index')) {
+                console.warn('Missing index, loading without sorting...');
+                db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .onSnapshot((snapshot) => {
+                        const docs = snapshot.docs.sort((a, b) => {
+                            const aTime = a.data().createdAt?.seconds || 0;
+                            const bTime = b.data().createdAt?.seconds || 0;
+                            return bTime - aTime;
+                        });
+                        console.log('Admin customer orders loaded (manual sort):', docs.length);
+                        renderAdminCustomerOrders(docs);
+                    });
+            }
+        });
+}
+
+function renderAdminCustomerOrders(orderDocs) {
+    const ordersList = document.getElementById('adminCustomerOrdersList');
+    
+    if (orderDocs.length === 0) {
+        ordersList.innerHTML = '<div class="cart-empty">Nie masz jeszcze żadnych zamówień</div>';
+        return;
+    }
+    
+    ordersList.innerHTML = '';
+    
+    orderDocs.forEach((doc) => {
+        const order = doc.data();
+        const orderId = doc.id;
+        
+        const orderCard = document.createElement('div');
+        orderCard.className = `order-card status-${order.status}`;
+        
+        const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
+        const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
+        const statusIcon = order.status === 'pending' ? '⏳' : '✅';
+        
+        let itemsHtml = '';
+        order.items.forEach(item => {
+            itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
+        });
+        
+        const createdAt = order.createdAt ? 
+            new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
+            'Teraz';
+        
+        orderCard.innerHTML = `
+            <div class="order-header">
+                <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
+                <div class="order-status ${statusClass}">${statusIcon} ${statusText}</div>
+            </div>
+            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
+                🕐 ${createdAt}
+            </div>
+            <div class="order-items">
+                ${itemsHtml}
+            </div>
+            <div class="order-footer">
+                <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
+                <div style="font-weight: 700; color: #10b981;">${order.total} zł</div>
+            </div>
+        `;
+        
+        ordersList.appendChild(orderCard);
+    });
+}
+
+function loadAdminWaiterOrders() {
+    db.collection('orders')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            renderAdminWaiterOrders(snapshot.docs);
+        });
+}
+
+function renderAdminWaiterOrders(orderDocs) {
+    const ordersList = document.getElementById('adminWaiterOrdersList');
+    
+    if (orderDocs.length === 0) {
+        ordersList.innerHTML = '<div class="cart-empty">Brak zamówień</div>';
+        return;
+    }
+    
+    ordersList.innerHTML = '';
+    
+    orderDocs.forEach((doc) => {
+        const order = doc.data();
+        const orderId = doc.id;
+        
+        const orderCard = document.createElement('div');
+        orderCard.className = `order-card status-${order.status}`;
+        
+        const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
+        const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
+        
+        let itemsHtml = '';
+        order.items.forEach(item => {
+            itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
+        });
+        
+        const createdAt = order.createdAt ? 
+            new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
+            'Teraz';
+        
+        let actionButton = '';
+        if (order.status === 'pending') {
+            actionButton = `<button class="btn btn-success" style="width: auto; padding: 8px 16px;" onclick="acceptOrder('${orderId}')">✓ Przyjmij</button>`;
+        } else {
+            actionButton = `<div style="color: #10b981; font-weight: 600;">✓ Zamówienie przyjęte</div>`;
+        }
+        
+        orderCard.innerHTML = `
+            <div class="order-header">
+                <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
+                <div class="order-status ${statusClass}">${statusText}</div>
+            </div>
+            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
+                👤 ${order.userName}<br>
+                📧 ${order.userEmail}<br>
+                🕐 ${createdAt}
+            </div>
+            <div class="order-items">
+                ${itemsHtml}
+            </div>
+            <div class="order-footer">
+                <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
+                ${actionButton}
+            </div>
+        `;
+        
+        ordersList.appendChild(orderCard);
+    });
 }
 
 function setupCustomerView() {

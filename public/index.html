@@ -466,6 +466,74 @@
           <div id="ordersList" class="orders-list"></div>
         </div>
       </div>
+
+      <div id="adminView" class="view">
+        <div class="header">
+          <h1>👑 Panel Administratora</h1>
+          <div class="user-info">
+            <img id="adminAvatar" class="user-avatar" src="" alt="Avatar">
+            <span id="adminName"></span>
+            <button class="btn btn-danger btn-logout" onclick="logout()">Wyloguj</button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+          <button class="btn btn-primary" onclick="switchAdminPanel('customer')" id="adminCustomerBtn" style="width: auto; padding: 12px 24px; background: #667eea;">🍽️ Panel Klienta</button>
+          <button class="btn" onclick="switchAdminPanel('waiter')" id="adminWaiterBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">👨‍🍳 Panel Kelnera</button>
+        </div>
+
+        <div id="adminCustomerPanel" class="admin-panel">
+          <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="btn btn-primary" onclick="showCustomerTab('menu')" id="adminMenuTabBtn" style="width: auto; padding: 12px 24px; background: #667eea;">📋 Menu</button>
+            <button class="btn" onclick="showCustomerTab('orders')" id="adminOrdersTabBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📦 Moje Zamówienia</button>
+          </div>
+
+          <div id="adminMenuTab" class="customer-tab">
+            <div class="card">
+              <h2 style="margin-bottom: 24px; color: #333;">Wybierz z Menu</h2>
+              <div id="adminMenuGrid" class="menu-grid"></div>
+            </div>
+
+            <div class="cart">
+              <h2>Twoje Zamówienie</h2>
+              <div id="adminCartItems"></div>
+              <div id="adminOrderForm" class="order-form" style="display: none;">
+                <div class="form-group">
+                  <label for="adminTableNumber">Numer Stolika</label>
+                  <select id="adminTableNumber" required>
+                    <option value="">Wybierz stolik</option>
+                    <option value="1">Stolik 1</option>
+                    <option value="2">Stolik 2</option>
+                    <option value="3">Stolik 3</option>
+                    <option value="4">Stolik 4</option>
+                    <option value="5">Stolik 5</option>
+                    <option value="6">Stolik 6</option>
+                    <option value="7">Stolik 7</option>
+                    <option value="8">Stolik 8</option>
+                    <option value="9">Stolik 9</option>
+                    <option value="10">Stolik 10</option>
+                  </select>
+                </div>
+                <button class="btn btn-success" onclick="placeOrderAsAdmin()">📦 Zamów</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="adminOrdersTab" class="customer-tab" style="display: none;">
+            <div class="card">
+              <h2 style="margin-bottom: 24px; color: #333;">Moje Zamówienia</h2>
+              <div id="adminCustomerOrdersList" class="orders-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="adminWaiterPanel" class="admin-panel" style="display: none;">
+          <div class="card">
+            <h2 style="margin-bottom: 24px; color: #333;">Zamówienia</h2>
+            <div id="adminWaiterOrdersList" class="orders-list"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="app.js"></script>
