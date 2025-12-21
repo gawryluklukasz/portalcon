@@ -9,8 +9,6 @@ function googleLogin() {
             const user = result.user;
             console.log('Login successful', user);
         })
-        .catch((error) => {
-            console.error('Login error:', error);
-        });
+        .catch(console.log);
 }
 
