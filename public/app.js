@@ -124,6 +124,94 @@ function setupCustomerView() {
     
     renderMenu();
     updateCart();
+    showCustomerTab('menu');
+}
+
+function showCustomerTab(tab) {
+    const menuTab = document.getElementById('menuTab');
+    const ordersTab = document.getElementById('ordersTab');
+    const menuBtn = document.getElementById('menuTabBtn');
+    const ordersBtn = document.getElementById('ordersTabBtn');
+    
+    if (tab === 'menu') {
+        menuTab.style.display = 'block';
+        ordersTab.style.display = 'none';
+        menuBtn.style.background = '#667eea';
+        menuBtn.style.color = 'white';
+        ordersBtn.style.background = '#e5e7eb';
+        ordersBtn.style.color = '#333';
+    } else {
+        menuTab.style.display = 'none';
+        ordersTab.style.display = 'block';
+        menuBtn.style.background = '#e5e7eb';
+        menuBtn.style.color = '#333';
+        ordersBtn.style.background = '#667eea';
+        ordersBtn.style.color = 'white';
+        loadCustomerOrders();
+    }
+}
+
+function loadCustomerOrders() {
+    console.log('Loading customer orders for:', currentUser.uid);
+    db.collection('orders')
+        .where('userId', '==', currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            renderCustomerOrders(snapshot.docs);
+        }, (error) => {
+            console.error('Error loading customer orders:', error);
+        });
+}
+
+function renderCustomerOrders(orderDocs) {
+    const ordersList = document.getElementById('customerOrdersList');
+    
+    if (orderDocs.length === 0) {
+        ordersList.innerHTML = '<div class="cart-empty">Nie masz jeszcze żadnych zamówień</div>';
+        return;
+    }
+    
+    ordersList.innerHTML = '';
+    
+    orderDocs.forEach((doc) => {
+        const order = doc.data();
+        const orderId = doc.id;
+        
+        const orderCard = document.createElement('div');
+        orderCard.className = `order-card status-${order.status}`;
+        
+        const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
+        const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
+        const statusIcon = order.status === 'pending' ? '⏳' : '✅';
+        
+        let itemsHtml = '';
+        order.items.forEach(item => {
+            itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
+        });
+        
+        const createdAt = order.createdAt ? 
+            new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
+            'Teraz';
+        
+        orderCard.innerHTML = `
+            <div class="order-header">
+                <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
+                <div class="order-status ${statusClass}">${statusIcon} ${statusText}</div>
+            </div>
+            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
+                🕐 ${createdAt}
+            </div>
+            <div class="order-items">
+                ${itemsHtml}
+            </div>
+            <div class="order-footer">
+                <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
+                <div style="font-weight: 700; color: #10b981;">${order.total} zł</div>
+            </div>
+        `;
+        
+        ordersList.appendChild(orderCard);
+    });
 }
 
 function renderMenu() {
@@ -241,6 +329,8 @@ async function placeOrder() {
         document.getElementById('tableNumber').value = '';
         updateCart();
         updateMenuSelection();
+        
+        showCustomerTab('orders');
     } catch (error) {
         console.error('Error placing order:', error);
         alert('Błąd składania zamówienia: ' + error.message);

@@ -363,7 +363,7 @@
 
       <div id="customerView" class="view">
         <div class="header">
-          <h1>🍽️ Menu</h1>
+          <h1 id="customerViewTitle">🍽️ Menu</h1>
           <div class="user-info">
             <img id="customerAvatar" class="user-avatar" src="" alt="Avatar">
             <span id="customerName"></span>
@@ -371,32 +371,46 @@
           </div>
         </div>
 
-        <div class="card">
-          <h2 style="margin-bottom: 24px; color: #333;">Wybierz z Menu</h2>
-          <div id="menuGrid" class="menu-grid"></div>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+          <button class="btn btn-primary" onclick="showCustomerTab('menu')" id="menuTabBtn" style="width: auto; padding: 12px 24px; background: #667eea;">📋 Menu</button>
+          <button class="btn" onclick="showCustomerTab('orders')" id="ordersTabBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📦 Moje Zamówienia</button>
         </div>
 
-        <div class="cart">
-          <h2>Twoje Zamówienie</h2>
-          <div id="cartItems"></div>
-          <div id="orderForm" class="order-form" style="display: none;">
-            <div class="form-group">
-              <label for="tableNumber">Numer Stolika</label>
-              <select id="tableNumber" required>
-                <option value="">Wybierz stolik</option>
-                <option value="1">Stolik 1</option>
-                <option value="2">Stolik 2</option>
-                <option value="3">Stolik 3</option>
-                <option value="4">Stolik 4</option>
-                <option value="5">Stolik 5</option>
-                <option value="6">Stolik 6</option>
-                <option value="7">Stolik 7</option>
-                <option value="8">Stolik 8</option>
-                <option value="9">Stolik 9</option>
-                <option value="10">Stolik 10</option>
-              </select>
+        <div id="menuTab" class="customer-tab">
+          <div class="card">
+            <h2 style="margin-bottom: 24px; color: #333;">Wybierz z Menu</h2>
+            <div id="menuGrid" class="menu-grid"></div>
+          </div>
+
+          <div class="cart">
+            <h2>Twoje Zamówienie</h2>
+            <div id="cartItems"></div>
+            <div id="orderForm" class="order-form" style="display: none;">
+              <div class="form-group">
+                <label for="tableNumber">Numer Stolika</label>
+                <select id="tableNumber" required>
+                  <option value="">Wybierz stolik</option>
+                  <option value="1">Stolik 1</option>
+                  <option value="2">Stolik 2</option>
+                  <option value="3">Stolik 3</option>
+                  <option value="4">Stolik 4</option>
+                  <option value="5">Stolik 5</option>
+                  <option value="6">Stolik 6</option>
+                  <option value="7">Stolik 7</option>
+                  <option value="8">Stolik 8</option>
+                  <option value="9">Stolik 9</option>
+                  <option value="10">Stolik 10</option>
+                </select>
+              </div>
+              <button class="btn btn-success" onclick="placeOrder()">📦 Zamów</button>
             </div>
-            <button class="btn btn-success" onclick="placeOrder()">📦 Zamów</button>
+          </div>
+        </div>
+
+        <div id="ordersTab" class="customer-tab" style="display: none;">
+          <div class="card">
+            <h2 style="margin-bottom: 24px; color: #333;">Moje Zamówienia</h2>
+            <div id="customerOrdersList" class="orders-list"></div>
           </div>
         </div>
       </div>
