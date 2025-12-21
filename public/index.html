@@ -1,92 +1,422 @@
 <!DOCTYPE html>
-<html>
+<html lang="pl">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+    <title>Restaurant Order System</title>
 
-    <!-- update the version number as needed -->
     <script defer src="/__/firebase/12.7.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
     <script defer src="/__/firebase/12.7.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-database-compat.js"></script>
     <script defer src="/__/firebase/12.7.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+    <script defer src="/__/firebase/init.js?useEmulator=false"></script>
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .card {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+      }
+
+      .login-view {
+        max-width: 400px;
+        margin: 100px auto;
+      }
+
+      .login-view h1 {
+        color: #333;
+        margin-bottom: 24px;
+        text-align: center;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 16px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .btn-primary {
+        background: #4285f4;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #3367d6;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(66, 133, 244, 0.3);
+      }
+
+      .btn-success {
+        background: #10b981;
+        color: white;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+      }
+
+      .btn-warning {
+        background: #f59e0b;
+        color: white;
+      }
+
+      .btn-warning:hover {
+        background: #d97706;
+      }
+
+      .btn-danger {
+        background: #ef4444;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #dc2626;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        background: white;
+        padding: 20px 32px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .header h1 {
+        color: #333;
+        font-size: 28px;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+
+      .btn-logout {
+        padding: 8px 16px;
+        width: auto;
+      }
+
+      .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+
+      .menu-item {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        cursor: pointer;
+        border: 3px solid transparent;
+      }
+
+      .menu-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .menu-item.selected {
+        border-color: #10b981;
+        background: #f0fdf4;
+      }
+
+      .menu-item h3 {
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      .menu-item .category {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #4f46e5;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .menu-item .price {
+        color: #10b981;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .cart {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .cart h2 {
+        margin-bottom: 16px;
+        color: #333;
+      }
+
+      .cart-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .cart-empty {
+        color: #9ca3af;
+        text-align: center;
+        padding: 32px;
+      }
+
+      .order-form {
+        margin-top: 24px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 16px;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .orders-list {
+        display: grid;
+        gap: 16px;
+      }
+
+      .order-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #667eea;
+      }
+
+      .order-card.status-pending {
+        border-left-color: #f59e0b;
+      }
+
+      .order-card.status-accepted {
+        border-left-color: #10b981;
+      }
+
+      .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .order-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .order-status {
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .order-status.pending {
+        background: #fef3c7;
+        color: #d97706;
+      }
+
+      .order-status.accepted {
+        background: #d1fae5;
+        color: #059669;
+      }
+
+      .order-items {
+        margin-bottom: 16px;
+      }
+
+      .order-item {
+        padding: 8px 0;
+        color: #666;
+      }
+
+      .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 2px solid #e5e7eb;
+      }
+
+      .table-number {
+        font-weight: 700;
+        color: #667eea;
+        font-size: 18px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: white;
+        font-size: 18px;
+      }
+
+      @media (max-width: 768px) {
+        .menu-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header {
+          flex-direction: column;
+          gap: 16px;
+          text-align: center;
+        }
       }
     </style>
   </head>
   <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
+    <div class="container">
+      <div id="loading" class="loading">Ładowanie...</div>
+
+      <div id="loginView" class="view">
+        <div class="card login-view">
+          <h1>🍽️ System Zamówień</h1>
+          <button class="btn btn-primary" onclick="googleLogin()">
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <path fill="currentColor" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"/>
+              <path fill="currentColor" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z"/>
+              <path fill="currentColor" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z"/>
+              <path fill="currentColor" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z"/>
+            </svg>
+            Zaloguj się przez Google
+          </button>
+        </div>
+      </div>
+
+      <div id="customerView" class="view">
+        <div class="header">
+          <h1>🍽️ Menu</h1>
+          <div class="user-info">
+            <img id="customerAvatar" class="user-avatar" src="" alt="Avatar">
+            <span id="customerName"></span>
+            <button class="btn btn-danger btn-logout" onclick="logout()">Wyloguj</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 style="margin-bottom: 24px; color: #333;">Wybierz z Menu</h2>
+          <div id="menuGrid" class="menu-grid"></div>
+        </div>
+
+        <div class="cart">
+          <h2>Twoje Zamówienie</h2>
+          <div id="cartItems"></div>
+          <div id="orderForm" class="order-form" style="display: none;">
+            <div class="form-group">
+              <label for="tableNumber">Numer Stolika</label>
+              <select id="tableNumber" required>
+                <option value="">Wybierz stolik</option>
+                <option value="1">Stolik 1</option>
+                <option value="2">Stolik 2</option>
+                <option value="3">Stolik 3</option>
+                <option value="4">Stolik 4</option>
+                <option value="5">Stolik 5</option>
+                <option value="6">Stolik 6</option>
+                <option value="7">Stolik 7</option>
+                <option value="8">Stolik 8</option>
+                <option value="9">Stolik 9</option>
+                <option value="10">Stolik 10</option>
+              </select>
+            </div>
+            <button class="btn btn-success" onclick="placeOrder()">📦 Zamów</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="waiterView" class="view">
+        <div class="header">
+          <h1>👨‍🍳 Panel Kelnera</h1>
+          <div class="user-info">
+            <img id="waiterAvatar" class="user-avatar" src="" alt="Avatar">
+            <span id="waiterName"></span>
+            <button class="btn btn-danger btn-logout" onclick="logout()">Wyloguj</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 style="margin-bottom: 24px; color: #333;">Zamówienia</h2>
+          <div id="ordersList" class="orders-list"></div>
+        </div>
+      </div>
     </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
-    </script>
-
-    <button onclick="googleLogin()">Login with Google</button>
 
     <script src="app.js"></script>
   </body>
