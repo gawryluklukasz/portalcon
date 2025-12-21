@@ -262,6 +262,28 @@ function logout() {
 // ============================================
 // HELPER FUNCTIONS - UI
 // ============================================
+function saveLastTableNumber(tableNumber) {
+    try {
+        localStorage.setItem('lastTableNumber', tableNumber);
+    } catch (e) {
+        console.warn('Could not save table number to localStorage:', e);
+    }
+}
+
+function restoreLastTableNumber(elementId) {
+    try {
+        const lastTableNumber = localStorage.getItem('lastTableNumber');
+        if (lastTableNumber) {
+            const selectElement = document.getElementById(elementId);
+            if (selectElement) {
+                selectElement.value = lastTableNumber;
+            }
+        }
+    } catch (e) {
+        console.warn('Could not restore table number from localStorage:', e);
+    }
+}
+
 function setButtonActive(button, isActive) {
     if (isActive) {
         button.style.background = '#667eea';
@@ -483,6 +505,9 @@ function updateAdminCart() {
     const orderForm = document.getElementById('adminOrderForm');
     updateCartDisplay(adminCart, cartItems, orderForm);
     renderAdminMenu();
+    if (adminCart.length > 0) {
+        restoreLastTableNumber('adminTableNumber');
+    }
 }
 
 async function placeOrderAsAdmin() {
@@ -514,6 +539,7 @@ async function placeOrderAsAdmin() {
         
         alert('Zamówienie zostało złożone! ✅');
         
+        saveLastTableNumber(tableNumber);
         adminCart = [];
         document.getElementById('adminTableNumber').value = '';
         updateAdminCart();
@@ -579,6 +605,7 @@ function setupCustomerView() {
     
     renderMenu();
     updateCart();
+    restoreLastTableNumber('tableNumber');
     showCustomerTab('menu');
 }
 
@@ -661,6 +688,9 @@ function updateCart() {
     const orderForm = document.getElementById('orderForm');
     updateCartDisplay(cart, cartItems, orderForm);
     renderMenu();
+    if (cart.length > 0) {
+        restoreLastTableNumber('tableNumber');
+    }
 }
 
 async function placeOrder() {
@@ -692,6 +722,7 @@ async function placeOrder() {
         
         alert('Zamówienie zostało złożone! ✅');
         
+        saveLastTableNumber(tableNumber);
         cart = [];
         document.getElementById('tableNumber').value = '';
         updateCart();
