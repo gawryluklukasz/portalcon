@@ -1,3 +1,6 @@
+// ============================================
+// GLOBAL STATE
+// ============================================
 let db;
 let currentUser = null;
 let userRole = null;
@@ -6,6 +9,9 @@ let adminCart = [];
 let isRegisterMode = false;
 let currentAdminPanel = 'customer';
 
+// ============================================
+// MENU DATA
+// ============================================
 const menuItems = [
     { id: 1, name: 'Pizza Margherita', category: 'food', price: 25 },
     { id: 2, name: 'Pizza Pepperoni', category: 'food', price: 30 },
@@ -25,6 +31,9 @@ const menuItems = [
     { id: 16, name: 'Wine', category: 'drink', price: 20 }
 ];
 
+// ============================================
+// FIREBASE INITIALIZATION
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, checking Firebase...');
     const checkFirebase = setInterval(() => {
@@ -38,6 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
+// ============================================
+// AUTHENTICATION
+// ============================================
 function initAuth() {
     console.log('Initializing auth...');
     firebase.auth().onAuthStateChanged(async (user) => {
@@ -247,6 +259,155 @@ function logout() {
         });
 }
 
+// ============================================
+// HELPER FUNCTIONS - UI
+// ============================================
+function setButtonActive(button, isActive) {
+    if (isActive) {
+        button.style.background = '#667eea';
+        button.style.color = 'white';
+    } else {
+        button.style.background = '#e5e7eb';
+        button.style.color = '#333';
+    }
+}
+
+function createOrderCard(order, orderId, options = {}) {
+    const { showUserInfo = false, showActions = false } = options;
+    const orderCard = document.createElement('div');
+    orderCard.className = `order-card status-${order.status}`;
+    
+    const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
+    const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
+    const statusIcon = order.status === 'pending' ? '⏳' : '✅';
+    
+    let itemsHtml = '';
+    order.items.forEach(item => {
+        itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
+    });
+    
+    const createdAt = order.createdAt ? 
+        new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
+        'Teraz';
+    
+    let userInfoHtml = '';
+    if (showUserInfo) {
+        userInfoHtml = `
+            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
+                👤 ${order.userName}<br>
+                📧 ${order.userEmail}<br>
+                🕐 ${createdAt}
+            </div>
+        `;
+    } else {
+        userInfoHtml = `
+            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
+                🕐 ${createdAt}
+            </div>
+        `;
+    }
+    
+    let actionButton = '';
+    if (showActions) {
+        if (order.status === 'pending') {
+            actionButton = `<button class="btn btn-success" style="width: auto; padding: 8px 16px;" onclick="acceptOrder('${orderId}')">✓ Przyjmij</button>`;
+        } else {
+            actionButton = `<div style="color: #10b981; font-weight: 600;">✓ Zamówienie przyjęte</div>`;
+        }
+    } else {
+        actionButton = `<div style="font-weight: 700; color: #10b981;">${order.total} zł</div>`;
+    }
+    
+    orderCard.innerHTML = `
+        <div class="order-header">
+            <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
+            <div class="order-status ${statusClass}">${statusIcon} ${statusText}</div>
+        </div>
+        ${userInfoHtml}
+        <div class="order-items">
+            ${itemsHtml}
+        </div>
+        <div class="order-footer">
+            <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
+            ${actionButton}
+        </div>
+    `;
+    
+    return orderCard;
+}
+
+function renderOrdersList(orderDocs, listElement, options = {}) {
+    if (orderDocs.length === 0) {
+        listElement.innerHTML = '<div class="cart-empty">Brak zamówień</div>';
+        return;
+    }
+    
+    listElement.innerHTML = '';
+    orderDocs.forEach((doc) => {
+        const orderCard = createOrderCard(doc.data(), doc.id, options);
+        listElement.appendChild(orderCard);
+    });
+}
+
+function renderMenuGrid(gridElement, items, cartArray, toggleFunction) {
+    gridElement.innerHTML = '';
+    
+    items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'menu-item';
+        itemDiv.onclick = () => toggleFunction(item);
+        
+        const categoryEmoji = item.category === 'food' ? '🍽️' : '🥤';
+        const categoryText = item.category === 'food' ? 'Jedzenie' : 'Napój';
+        
+        itemDiv.innerHTML = `
+            <div class="category">${categoryEmoji} ${categoryText}</div>
+            <h3>${item.name}</h3>
+            <div class="price">${item.price} zł</div>
+        `;
+        
+        if (cartArray.some(cartItem => cartItem.id === item.id)) {
+            itemDiv.classList.add('selected');
+        }
+        
+        gridElement.appendChild(itemDiv);
+    });
+}
+
+function updateCartDisplay(cartArray, cartItemsElement, orderFormElement) {
+    if (cartArray.length === 0) {
+        cartItemsElement.innerHTML = '<div class="cart-empty">Koszyk jest pusty. Wybierz pozycje z menu.</div>';
+        orderFormElement.style.display = 'none';
+        return;
+    }
+    
+    let html = '';
+    let total = 0;
+    
+    cartArray.forEach(item => {
+        html += `
+            <div class="cart-item">
+                <span>${item.name}</span>
+                <span>${item.price} zł</span>
+            </div>
+        `;
+        total += item.price;
+    });
+    
+    html += `
+        <div class="cart-item" style="font-weight: 700; border-top: 2px solid #333; margin-top: 8px; padding-top: 16px;">
+            <span>Razem:</span>
+            <span>${total} zł</span>
+        </div>
+    `;
+    
+    cartItemsElement.innerHTML = html;
+    orderFormElement.style.display = 'block';
+}
+
+// ============================================
+// ADMIN VIEW
+// ============================================
 function setupAdminView() {
     document.getElementById('adminName').textContent = currentUser.displayName;
     document.getElementById('adminAvatar').src = currentUser.photoURL;
@@ -264,10 +425,8 @@ function switchAdminPanel(panel) {
     if (panel === 'customer') {
         customerPanel.style.display = 'block';
         waiterPanel.style.display = 'none';
-        customerBtn.style.background = '#667eea';
-        customerBtn.style.color = 'white';
-        waiterBtn.style.background = '#e5e7eb';
-        waiterBtn.style.color = '#333';
+        setButtonActive(customerBtn, true);
+        setButtonActive(waiterBtn, false);
         
         renderAdminMenu();
         updateAdminCart();
@@ -275,10 +434,8 @@ function switchAdminPanel(panel) {
     } else {
         customerPanel.style.display = 'none';
         waiterPanel.style.display = 'block';
-        customerBtn.style.background = '#e5e7eb';
-        customerBtn.style.color = '#333';
-        waiterBtn.style.background = '#667eea';
-        waiterBtn.style.color = 'white';
+        setButtonActive(customerBtn, false);
+        setButtonActive(waiterBtn, true);
         
         loadAdminWaiterOrders();
     }
@@ -293,41 +450,20 @@ function showAdminCustomerTab(tab) {
     if (tab === 'menu') {
         menuTab.style.display = 'block';
         ordersTab.style.display = 'none';
-        menuBtn.style.background = '#667eea';
-        menuBtn.style.color = 'white';
-        ordersBtn.style.background = '#e5e7eb';
-        ordersBtn.style.color = '#333';
+        setButtonActive(menuBtn, true);
+        setButtonActive(ordersBtn, false);
     } else {
         menuTab.style.display = 'none';
         ordersTab.style.display = 'block';
-        menuBtn.style.background = '#e5e7eb';
-        menuBtn.style.color = '#333';
-        ordersBtn.style.background = '#667eea';
-        ordersBtn.style.color = 'white';
+        setButtonActive(menuBtn, false);
+        setButtonActive(ordersBtn, true);
         loadAdminCustomerOrders();
     }
 }
 
 function renderAdminMenu() {
     const menuGrid = document.getElementById('adminMenuGrid');
-    menuGrid.innerHTML = '';
-    
-    menuItems.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'menu-item';
-        itemDiv.onclick = () => toggleAdminMenuItem(item);
-        
-        const categoryEmoji = item.category === 'food' ? '🍽️' : '🥤';
-        const categoryText = item.category === 'food' ? 'Jedzenie' : 'Napój';
-        
-        itemDiv.innerHTML = `
-            <div class="category">${categoryEmoji} ${categoryText}</div>
-            <h3>${item.name}</h3>
-            <div class="price">${item.price} zł</div>
-        `;
-        
-        menuGrid.appendChild(itemDiv);
-    });
+    renderMenuGrid(menuGrid, menuItems, adminCart, toggleAdminMenuItem);
 }
 
 function toggleAdminMenuItem(item) {
@@ -340,54 +476,13 @@ function toggleAdminMenuItem(item) {
     }
     
     updateAdminCart();
-    updateAdminMenuSelection();
-}
-
-function updateAdminMenuSelection() {
-    const menuItemElements = document.querySelectorAll('#adminMenuGrid .menu-item');
-    menuItemElements.forEach((element, index) => {
-        const item = menuItems[index];
-        const isSelected = adminCart.some(cartItem => cartItem.id === item.id);
-        
-        if (isSelected) {
-            element.classList.add('selected');
-        } else {
-            element.classList.remove('selected');
-        }
-    });
 }
 
 function updateAdminCart() {
     const cartItems = document.getElementById('adminCartItems');
     const orderForm = document.getElementById('adminOrderForm');
-    
-    if (adminCart.length === 0) {
-        cartItems.innerHTML = '<div class="cart-empty">Koszyk jest pusty. Wybierz pozycje z menu.</div>';
-        orderForm.style.display = 'none';
-    } else {
-        let html = '';
-        let total = 0;
-        
-        adminCart.forEach(item => {
-            html += `
-                <div class="cart-item">
-                    <span>${item.name}</span>
-                    <span>${item.price} zł</span>
-                </div>
-            `;
-            total += item.price;
-        });
-        
-        html += `
-            <div class="cart-item" style="font-weight: 700; border-top: 2px solid #333; margin-top: 8px; padding-top: 16px;">
-                <span>Razem:</span>
-                <span>${total} zł</span>
-            </div>
-        `;
-        
-        cartItems.innerHTML = html;
-        orderForm.style.display = 'block';
-    }
+    updateCartDisplay(adminCart, cartItems, orderForm);
+    renderAdminMenu();
 }
 
 async function placeOrderAsAdmin() {
@@ -422,8 +517,6 @@ async function placeOrderAsAdmin() {
         adminCart = [];
         document.getElementById('adminTableNumber').value = '';
         updateAdminCart();
-        updateAdminMenuSelection();
-        
         showAdminCustomerTab('orders');
     } catch (error) {
         console.error('Error placing order:', error);
@@ -460,53 +553,7 @@ function loadAdminCustomerOrders() {
 
 function renderAdminCustomerOrders(orderDocs) {
     const ordersList = document.getElementById('adminCustomerOrdersList');
-    
-    if (orderDocs.length === 0) {
-        ordersList.innerHTML = '<div class="cart-empty">Nie masz jeszcze żadnych zamówień</div>';
-        return;
-    }
-    
-    ordersList.innerHTML = '';
-    
-    orderDocs.forEach((doc) => {
-        const order = doc.data();
-        const orderId = doc.id;
-        
-        const orderCard = document.createElement('div');
-        orderCard.className = `order-card status-${order.status}`;
-        
-        const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
-        const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
-        const statusIcon = order.status === 'pending' ? '⏳' : '✅';
-        
-        let itemsHtml = '';
-        order.items.forEach(item => {
-            itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
-        });
-        
-        const createdAt = order.createdAt ? 
-            new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
-            'Teraz';
-        
-        orderCard.innerHTML = `
-            <div class="order-header">
-                <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
-                <div class="order-status ${statusClass}">${statusIcon} ${statusText}</div>
-            </div>
-            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
-                🕐 ${createdAt}
-            </div>
-            <div class="order-items">
-                ${itemsHtml}
-            </div>
-            <div class="order-footer">
-                <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
-                <div style="font-weight: 700; color: #10b981;">${order.total} zł</div>
-            </div>
-        `;
-        
-        ordersList.appendChild(orderCard);
-    });
+    renderOrdersList(orderDocs, ordersList, { showUserInfo: false, showActions: false });
 }
 
 function loadAdminWaiterOrders() {
@@ -519,62 +566,12 @@ function loadAdminWaiterOrders() {
 
 function renderAdminWaiterOrders(orderDocs) {
     const ordersList = document.getElementById('adminWaiterOrdersList');
-    
-    if (orderDocs.length === 0) {
-        ordersList.innerHTML = '<div class="cart-empty">Brak zamówień</div>';
-        return;
-    }
-    
-    ordersList.innerHTML = '';
-    
-    orderDocs.forEach((doc) => {
-        const order = doc.data();
-        const orderId = doc.id;
-        
-        const orderCard = document.createElement('div');
-        orderCard.className = `order-card status-${order.status}`;
-        
-        const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
-        const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
-        
-        let itemsHtml = '';
-        order.items.forEach(item => {
-            itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
-        });
-        
-        const createdAt = order.createdAt ? 
-            new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
-            'Teraz';
-        
-        let actionButton = '';
-        if (order.status === 'pending') {
-            actionButton = `<button class="btn btn-success" style="width: auto; padding: 8px 16px;" onclick="acceptOrder('${orderId}')">✓ Przyjmij</button>`;
-        } else {
-            actionButton = `<div style="color: #10b981; font-weight: 600;">✓ Zamówienie przyjęte</div>`;
-        }
-        
-        orderCard.innerHTML = `
-            <div class="order-header">
-                <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
-                <div class="order-status ${statusClass}">${statusText}</div>
-            </div>
-            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
-                👤 ${order.userName}<br>
-                📧 ${order.userEmail}<br>
-                🕐 ${createdAt}
-            </div>
-            <div class="order-items">
-                ${itemsHtml}
-            </div>
-            <div class="order-footer">
-                <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
-                ${actionButton}
-            </div>
-        `;
-        
-        ordersList.appendChild(orderCard);
-    });
+    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true });
 }
+
+// ============================================
+// CUSTOMER VIEW
+// ============================================
 
 function setupCustomerView() {
     document.getElementById('customerName').textContent = currentUser.displayName;
@@ -599,17 +596,13 @@ function showCustomerTab(tab) {
     if (tab === 'menu') {
         menuTab.style.display = 'block';
         ordersTab.style.display = 'none';
-        menuBtn.style.background = '#667eea';
-        menuBtn.style.color = 'white';
-        ordersBtn.style.background = '#e5e7eb';
-        ordersBtn.style.color = '#333';
+        setButtonActive(menuBtn, true);
+        setButtonActive(ordersBtn, false);
     } else {
         menuTab.style.display = 'none';
         ordersTab.style.display = 'block';
-        menuBtn.style.background = '#e5e7eb';
-        menuBtn.style.color = '#333';
-        ordersBtn.style.background = '#667eea';
-        ordersBtn.style.color = 'white';
+        setButtonActive(menuBtn, false);
+        setButtonActive(ordersBtn, true);
         loadCustomerOrders();
     }
 }
@@ -643,75 +636,12 @@ function loadCustomerOrders() {
 
 function renderCustomerOrders(orderDocs) {
     const ordersList = document.getElementById('customerOrdersList');
-    
-    if (orderDocs.length === 0) {
-        ordersList.innerHTML = '<div class="cart-empty">Nie masz jeszcze żadnych zamówień</div>';
-        return;
-    }
-    
-    ordersList.innerHTML = '';
-    
-    orderDocs.forEach((doc) => {
-        const order = doc.data();
-        const orderId = doc.id;
-        
-        const orderCard = document.createElement('div');
-        orderCard.className = `order-card status-${order.status}`;
-        
-        const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
-        const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
-        const statusIcon = order.status === 'pending' ? '⏳' : '✅';
-        
-        let itemsHtml = '';
-        order.items.forEach(item => {
-            itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
-        });
-        
-        const createdAt = order.createdAt ? 
-            new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
-            'Teraz';
-        
-        orderCard.innerHTML = `
-            <div class="order-header">
-                <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
-                <div class="order-status ${statusClass}">${statusIcon} ${statusText}</div>
-            </div>
-            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
-                🕐 ${createdAt}
-            </div>
-            <div class="order-items">
-                ${itemsHtml}
-            </div>
-            <div class="order-footer">
-                <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
-                <div style="font-weight: 700; color: #10b981;">${order.total} zł</div>
-            </div>
-        `;
-        
-        ordersList.appendChild(orderCard);
-    });
+    renderOrdersList(orderDocs, ordersList, { showUserInfo: false, showActions: false });
 }
 
 function renderMenu() {
     const menuGrid = document.getElementById('menuGrid');
-    menuGrid.innerHTML = '';
-    
-    menuItems.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'menu-item';
-        itemDiv.onclick = () => toggleMenuItem(item);
-        
-        const categoryEmoji = item.category === 'food' ? '🍽️' : '🥤';
-        const categoryText = item.category === 'food' ? 'Jedzenie' : 'Napój';
-        
-        itemDiv.innerHTML = `
-            <div class="category">${categoryEmoji} ${categoryText}</div>
-            <h3>${item.name}</h3>
-            <div class="price">${item.price} zł</div>
-        `;
-        
-        menuGrid.appendChild(itemDiv);
-    });
+    renderMenuGrid(menuGrid, menuItems, cart, toggleMenuItem);
 }
 
 function toggleMenuItem(item) {
@@ -724,54 +654,13 @@ function toggleMenuItem(item) {
     }
     
     updateCart();
-    updateMenuSelection();
-}
-
-function updateMenuSelection() {
-    const menuItemElements = document.querySelectorAll('.menu-item');
-    menuItemElements.forEach((element, index) => {
-        const item = menuItems[index];
-        const isSelected = cart.some(cartItem => cartItem.id === item.id);
-        
-        if (isSelected) {
-            element.classList.add('selected');
-        } else {
-            element.classList.remove('selected');
-        }
-    });
 }
 
 function updateCart() {
     const cartItems = document.getElementById('cartItems');
     const orderForm = document.getElementById('orderForm');
-    
-    if (cart.length === 0) {
-        cartItems.innerHTML = '<div class="cart-empty">Koszyk jest pusty. Wybierz pozycje z menu.</div>';
-        orderForm.style.display = 'none';
-    } else {
-        let html = '';
-        let total = 0;
-        
-        cart.forEach(item => {
-            html += `
-                <div class="cart-item">
-                    <span>${item.name}</span>
-                    <span>${item.price} zł</span>
-                </div>
-            `;
-            total += item.price;
-        });
-        
-        html += `
-            <div class="cart-item" style="font-weight: 700; border-top: 2px solid #333; margin-top: 8px; padding-top: 16px;">
-                <span>Razem:</span>
-                <span>${total} zł</span>
-            </div>
-        `;
-        
-        cartItems.innerHTML = html;
-        orderForm.style.display = 'block';
-    }
+    updateCartDisplay(cart, cartItems, orderForm);
+    renderMenu();
 }
 
 async function placeOrder() {
@@ -806,8 +695,6 @@ async function placeOrder() {
         cart = [];
         document.getElementById('tableNumber').value = '';
         updateCart();
-        updateMenuSelection();
-        
         showCustomerTab('orders');
     } catch (error) {
         console.error('Error placing order:', error);
@@ -815,6 +702,9 @@ async function placeOrder() {
     }
 }
 
+// ============================================
+// WAITER VIEW
+// ============================================
 function setupWaiterView() {
     document.getElementById('waiterName').textContent = currentUser.displayName;
     document.getElementById('waiterAvatar').src = currentUser.photoURL;
@@ -832,61 +722,7 @@ function loadOrders() {
 
 function renderOrders(orderDocs) {
     const ordersList = document.getElementById('ordersList');
-    
-    if (orderDocs.length === 0) {
-        ordersList.innerHTML = '<div class="cart-empty">Brak zamówień</div>';
-        return;
-    }
-    
-    ordersList.innerHTML = '';
-    
-    orderDocs.forEach((doc) => {
-        const order = doc.data();
-        const orderId = doc.id;
-        
-        const orderCard = document.createElement('div');
-        orderCard.className = `order-card status-${order.status}`;
-        
-        const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
-        const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
-        
-        let itemsHtml = '';
-        order.items.forEach(item => {
-            itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
-        });
-        
-        const createdAt = order.createdAt ? 
-            new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
-            'Teraz';
-        
-        let actionButton = '';
-        if (order.status === 'pending') {
-            actionButton = `<button class="btn btn-success" style="width: auto; padding: 8px 16px;" onclick="acceptOrder('${orderId}')">✓ Przyjmij</button>`;
-        } else {
-            actionButton = `<div style="color: #10b981; font-weight: 600;">✓ Zamówienie przyjęte</div>`;
-        }
-        
-        orderCard.innerHTML = `
-            <div class="order-header">
-                <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
-                <div class="order-status ${statusClass}">${statusText}</div>
-            </div>
-            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
-                👤 ${order.userName}<br>
-                📧 ${order.userEmail}<br>
-                🕐 ${createdAt}
-            </div>
-            <div class="order-items">
-                ${itemsHtml}
-            </div>
-            <div class="order-footer">
-                <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
-                ${actionButton}
-            </div>
-        `;
-        
-        ordersList.appendChild(orderCard);
-    });
+    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true });
 }
 
 async function acceptOrder(orderId) {

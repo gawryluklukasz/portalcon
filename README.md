@@ -4,12 +4,17 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 
 ## Funkcjonalności
 
+### Autentykacja
+- 🔐 Logowanie przez Google
+- ✉️ Rejestracja i logowanie przez Email/Password
+- 🔄 Automatyczne przypisywanie roli po pierwszym logowaniu
+
 ### Dla Klientów
-- 🔐 Logowanie przez konto Google
 - 📋 Przeglądanie menu (jedzenie i napoje)
 - 🛒 Dodawanie pozycji do koszyka
 - 🪑 Wybór numeru stolika
 - 📦 Składanie zamówień
+- 📜 Historia własnych zamówień
 
 ### Dla Kelnerów
 - 👀 Podgląd wszystkich zamówień w czasie rzeczywistym
@@ -17,12 +22,19 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 - 📍 Informacja o numerze stolika dla każdego zamówienia
 - 👤 Dane klienta przy każdym zamówieniu
 
+### Dla Administratorów
+- 👑 Panel administratora z pełną kontrolą
+- 🔄 Przełączanie między widokiem klienta i kelnera
+- 🍽️ Składanie zamówień jako klient
+- 👨‍🍳 Zarządzanie wszystkimi zamówieniami jako kelner
+
 ## Konfiguracja Firebase
 
 ### 1. Włącz Authentication
 W Firebase Console:
 - Przejdź do **Authentication** > **Sign-in method**
 - Włącz **Google** jako provider
+- Włącz **Email/Password** jako provider
 - Dodaj autoryzowane domeny (localhost dla testów)
 
 ### 2. Włącz Firestore Database
@@ -51,26 +63,45 @@ service cloud.firestore {
 }
 ```
 
-### 3. Dodaj indeks dla Firestore
-W **Firestore Database** > **Indexes**, utwórz indeks:
+### 3. Wdróż indeksy Firestore
+Projekt zawiera plik `firestore.indexes.json` z definicją wymaganych indeksów.
+
+Wdróż indeksy komendą:
+```bash
+firebase deploy --only firestore
+```
+
+Lub kliknij w link z błędu w konsoli przeglądarki, aby utworzyć indeks automatycznie.
+
+Wymagany indeks:
 - Kolekcja: `orders`
-- Pola: `createdAt` (Descending)
-- Status zapytania: Enabled
+- Pola: `userId` (Ascending), `createdAt` (Descending)
 
 ## Zarządzanie rolami
 
 Domyślnie wszyscy nowi użytkownicy otrzymują rolę `customer`.
 
-### Zmiana użytkownika na kelnera
+### Dostępne role
+- **`customer`** - standardowy klient (domyślna)
+- **`waiter`** - kelner z dostępem do panelu zamówień
+- **`admin`** - administrator z pełnym dostępem do wszystkich paneli
+
+### Zmiana roli użytkownika
 W Firebase Console > Firestore Database:
 1. Znajdź kolekcję `users`
 2. Znajdź dokument użytkownika (po UID)
-3. Zmień pole `role` z `customer` na `waiter`
+3. Zmień pole `role` na `waiter` lub `admin`
 
 Lub przez Firebase CLI/Console:
 ```javascript
+// Zmiana na kelnera
 firebase.firestore().collection('users').doc('USER_UID').update({
   role: 'waiter'
+})
+
+// Zmiana na admina
+firebase.firestore().collection('users').doc('USER_UID').update({
+  role: 'admin'
 })
 ```
 
@@ -94,7 +125,7 @@ firebase deploy
 {
   email: string,
   name: string,
-  role: 'customer' | 'waiter',
+  role: 'customer' | 'waiter' | 'admin',
   createdAt: timestamp
 }
 ```
@@ -133,10 +164,55 @@ const menuItems = [
 ];
 ```
 
+## Struktura kodu
+
+Plik `public/app.js` (741 linii) jest podzielony na logiczne sekcje:
+
+### 1. Global State (linie 1-10)
+Zmienne globalne aplikacji: `db`, `currentUser`, `userRole`, `cart`, `adminCart`
+
+### 2. Menu Data (linie 12-32)
+Tablica `menuItems` z definicją menu restauracji
+
+### 3. Firebase Initialization (linie 34-48)
+Inicjalizacja Firebase i Firestore
+
+### 4. Authentication (linie 50-260)
+- `initAuth()` - obsługa zmian stanu autentykacji
+- `checkAndSetUserRole()` - zarządzanie rolami użytkowników
+- `toggleAuthMode()`, `emailAuth()`, `registerWithEmail()`, `loginWithEmail()` - autentykacja email/password
+- `googleLogin()` - autentykacja Google
+- `logout()` - wylogowanie
+
+### 5. Helper Functions - UI (linie 262-406)
+Pomocnicze funkcje do eliminacji duplikacji kodu:
+- `setButtonActive()` - stylowanie przycisków
+- `createOrderCard()` - tworzenie kart zamówień
+- `renderOrdersList()` - renderowanie list zamówień
+- `renderMenuGrid()` - renderowanie siatki menu
+- `updateCartDisplay()` - aktualizacja wyświetlania koszyka
+
+### 6. Admin View (linie 408-570)
+Panel administratora z przełączaniem między widokami
+
+### 7. Customer View (linie 572-703)
+Panel klienta z menu i historią zamówień
+
+### 8. Waiter View (linie 705-742)
+Panel kelnera z zarządzaniem zamówieniami
+
+## Refaktoryzacja
+
+Kod został zoptymalizowany z **906 linii do 741 linii** poprzez:
+- ✅ Usunięcie duplikacji (3 różne funkcje renderowania zamówień → 1 uniwersalna)
+- ✅ Zunifikowanie renderowania menu i koszyka
+- ✅ Dodanie sekcji komentarzowych dla lepszej nawigacji
+- ✅ Wydzielenie funkcji pomocniczych
+
 ## Technologie
 
 - Firebase Hosting
-- Firebase Authentication (Google Sign-In)
-- Cloud Firestore
-- Vanilla JavaScript
+- Firebase Authentication (Google Sign-In + Email/Password)
+- Cloud Firestore (z indeksami composite)
+- Vanilla JavaScript (ES6+)
 - CSS3 (nowoczesny UI)
