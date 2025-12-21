@@ -654,7 +654,7 @@ function switchAdminPanel(panel) {
     } else if (panel === 'waiter') {
         waiterPanel.style.display = 'block';
         setButtonActive(waiterBtn, true);
-        loadWaiterOrdersForAdmin();
+        loadAdminWaiterOrders();
     } else if (panel === 'menu') {
         menuPanel.style.display = 'block';
         setButtonActive(menuBtn, true);
