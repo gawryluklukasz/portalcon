@@ -586,6 +586,11 @@ function setupCustomerView() {
 }
 
 function showCustomerTab(tab) {
+    if (userRole === 'admin' && currentAdminPanel === 'customer') {
+        showAdminCustomerTab(tab);
+        return;
+    }
+    
     const menuTab = document.getElementById('menuTab');
     const ordersTab = document.getElementById('ordersTab');
     const menuBtn = document.getElementById('menuTabBtn');
