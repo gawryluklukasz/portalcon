@@ -574,35 +574,42 @@ function setButtonActive(button, isActive) {
 
 function createOrderCard(order, orderId, options = {}) {
     const { showUserInfo = false, showActions = false } = options;
+    
     const orderCard = document.createElement('div');
-    orderCard.className = `order-card status-${order.status}`;
+    orderCard.className = 'order-card';
     
-    const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
-    const statusClass = order.status === 'pending' ? 'pending' : 'accepted';
+    const statusClass = order.status === 'pending' ? 'status-pending' : 'status-accepted';
     const statusIcon = order.status === 'pending' ? '⏳' : '✅';
-    
-    let itemsHtml = '';
-    order.items.forEach(item => {
-        itemsHtml += `<div class="order-item">• ${item.name} - ${item.price} zł</div>`;
-    });
-    
-    const createdAt = order.createdAt ? 
-        new Date(order.createdAt.seconds * 1000).toLocaleString('pl-PL') : 
-        'Teraz';
+    const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
     
     let userInfoHtml = '';
     if (showUserInfo) {
         userInfoHtml = `
-            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
-                👤 ${order.userName}<br>
-                📧 ${order.userEmail}<br>
-                🕐 ${createdAt}
+            <div class="order-user-info">
+                <div><strong>Klient:</strong> ${order.userName}</div>
+                <div><strong>Email:</strong> ${order.userEmail}</div>
             </div>
         `;
-    } else {
-        userInfoHtml = `
-            <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
-                🕐 ${createdAt}
+    }
+    
+    let itemsHtml = '<div class="order-items-list">';
+    order.items.forEach(item => {
+        const quantity = item.quantity || 1;
+        const itemTotal = item.price * quantity;
+        if (quantity > 1) {
+            itemsHtml += `<div class="order-item-line">• ${item.name} <span style="color: #667eea; font-weight: 600;">x${quantity}</span> - ${item.price} zł = ${itemTotal} zł</div>`;
+        } else {
+            itemsHtml += `<div class="order-item-line">• ${item.name} - ${item.price} zł</div>`;
+        }
+    });
+    itemsHtml += '</div>';
+    
+    let noteHtml = '';
+    if (order.note) {
+        noteHtml = `
+            <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
+                <div style="font-weight: 600; color: #92400e; margin-bottom: 4px;">📝 Notatka:</div>
+                <div style="color: #78350f;">${order.note}</div>
             </div>
         `;
     }
@@ -626,6 +633,7 @@ function createOrderCard(order, orderId, options = {}) {
         ${userInfoHtml}
         <div class="order-items">
             ${itemsHtml}
+            ${noteHtml}
         </div>
         <div class="order-footer">
             <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
@@ -703,14 +711,29 @@ function updateCartDisplay(cartArray, cartItemsElement, orderFormElement) {
     let html = '';
     let total = 0;
     
+    const isAdminCart = cartItemsElement.id === 'adminCartItems';
+    const quantityFunctionPrefix = isAdminCart ? 'Admin' : '';
+    
     cartArray.forEach(item => {
+        const itemTotal = item.price * (item.quantity || 1);
+        total += itemTotal;
+        
         html += `
-            <div class="cart-item">
-                <span>${item.name}</span>
-                <span>${item.price} zł</span>
+            <div class="cart-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #e5e7eb;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #333;">${item.name}</div>
+                    <div style="color: #667eea; font-size: 14px;">${item.price} zł x ${item.quantity || 1}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; background: #f3f4f6; border-radius: 6px; padding: 4px;">
+                        <button onclick="${isAdminCart ? 'decreaseAdminQuantity' : 'decreaseQuantity'}('${item.id}')" style="background: white; border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-weight: bold; color: #667eea;">−</button>
+                        <span style="min-width: 20px; text-align: center; font-weight: 600;">${item.quantity || 1}</span>
+                        <button onclick="${isAdminCart ? 'increaseAdminQuantity' : 'increaseQuantity'}('${item.id}')" style="background: white; border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-weight: bold; color: #667eea;">+</button>
+                    </div>
+                    <div style="font-weight: 700; min-width: 60px; text-align: right;">${itemTotal} zł</div>
+                </div>
             </div>
         `;
-        total += item.price;
     });
     
     html += `
@@ -799,10 +822,30 @@ function toggleAdminMenuItem(item) {
     if (index > -1) {
         adminCart.splice(index, 1);
     } else {
-        adminCart.push({ ...item });
+        adminCart.push({ ...item, quantity: 1 });
     }
     
     updateAdminCart();
+}
+
+function increaseAdminQuantity(itemId) {
+    const item = adminCart.find(cartItem => cartItem.id === itemId);
+    if (item) {
+        item.quantity++;
+        updateAdminCart();
+    }
+}
+
+function decreaseAdminQuantity(itemId) {
+    const item = adminCart.find(cartItem => cartItem.id === itemId);
+    if (item) {
+        if (item.quantity > 1) {
+            item.quantity--;
+        } else {
+            adminCart = adminCart.filter(cartItem => cartItem.id !== itemId);
+        }
+        updateAdminCart();
+    }
 }
 
 function updateAdminCart() {
@@ -822,6 +865,7 @@ async function placeOrderAsAdmin() {
     }
     
     const tableNumber = document.getElementById('adminTableNumber').value;
+    const note = document.getElementById('adminOrderNote').value.trim();
     
     if (!tableNumber) {
         alert('Wybierz numer stolika!');
@@ -834,9 +878,9 @@ async function placeOrderAsAdmin() {
     }
     
     try {
-        const total = adminCart.reduce((sum, item) => sum + item.price, 0);
+        const total = adminCart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
         
-        await db.collection('orders').add({
+        const orderData = {
             userId: currentUser.uid,
             userName: currentUser.displayName,
             userEmail: currentUser.email,
@@ -845,13 +889,20 @@ async function placeOrderAsAdmin() {
             total: total,
             status: 'pending',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        
+        if (note) {
+            orderData.note = note;
+        }
+        
+        await db.collection('orders').add(orderData);
         
         alert('Zamówienie zostało złożone! ✅');
         
         saveLastTableNumber(tableNumber);
         adminCart = [];
         document.getElementById('adminTableNumber').value = '';
+        document.getElementById('adminOrderNote').value = '';
         updateAdminCart();
         showAdminCustomerTab('orders');
     } catch (error) {
@@ -988,10 +1039,30 @@ function toggleMenuItem(item) {
     if (index > -1) {
         cart.splice(index, 1);
     } else {
-        cart.push({ ...item });
+        cart.push({ ...item, quantity: 1 });
     }
     
     updateCart();
+}
+
+function increaseQuantity(itemId) {
+    const item = cart.find(cartItem => cartItem.id === itemId);
+    if (item) {
+        item.quantity++;
+        updateCart();
+    }
+}
+
+function decreaseQuantity(itemId) {
+    const item = cart.find(cartItem => cartItem.id === itemId);
+    if (item) {
+        if (item.quantity > 1) {
+            item.quantity--;
+        } else {
+            cart = cart.filter(cartItem => cartItem.id !== itemId);
+        }
+        updateCart();
+    }
 }
 
 function updateCart() {
@@ -1011,6 +1082,7 @@ async function placeOrder() {
     }
     
     const tableNumber = document.getElementById('tableNumber').value;
+    const note = document.getElementById('orderNote').value.trim();
     
     if (!tableNumber) {
         alert('Wybierz numer stolika!');
@@ -1023,9 +1095,9 @@ async function placeOrder() {
     }
     
     try {
-        const total = cart.reduce((sum, item) => sum + item.price, 0);
+        const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
         
-        await db.collection('orders').add({
+        const orderData = {
             userId: currentUser.uid,
             userName: currentUser.displayName,
             userEmail: currentUser.email,
@@ -1034,13 +1106,20 @@ async function placeOrder() {
             total: total,
             status: 'pending',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        
+        if (note) {
+            orderData.note = note;
+        }
+        
+        await db.collection('orders').add(orderData);
         
         alert('Zamówienie zostało złożone! ✅');
         
         saveLastTableNumber(tableNumber);
         cart = [];
         document.getElementById('tableNumber').value = '';
+        document.getElementById('orderNote').value = '';
         updateCart();
         showCustomerTab('orders');
     } catch (error) {
