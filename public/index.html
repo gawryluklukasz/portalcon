@@ -480,6 +480,7 @@
         <div style="display: flex; gap: 12px; margin-bottom: 24px;">
           <button class="btn btn-primary" onclick="switchAdminPanel('customer')" id="adminCustomerBtn" style="width: auto; padding: 12px 24px; background: #667eea;">🍽️ Panel Klienta</button>
           <button class="btn" onclick="switchAdminPanel('waiter')" id="adminWaiterBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">👨‍🍳 Panel Kelnera</button>
+          <button class="btn" onclick="switchAdminPanel('menu')" id="adminMenuBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📋 Zarządzanie Menu</button>
         </div>
 
         <div id="adminCustomerPanel" class="admin-panel">
@@ -531,6 +532,29 @@
           <div class="card">
             <h2 style="margin-bottom: 24px; color: #333;">Zamówienia</h2>
             <div id="adminWaiterOrdersList" class="orders-list"></div>
+          </div>
+        </div>
+
+        <div id="adminMenuPanel" class="admin-panel" style="display: none;">
+          <div class="card">
+            <h2 style="margin-bottom: 24px; color: #333;">Zarządzanie Menu</h2>
+            
+            <div class="form-group" style="margin-bottom: 24px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+              <h3 style="margin-bottom: 16px; color: #333;">Dodaj Nową Pozycję</h3>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <input type="text" id="newMenuItemName" placeholder="Nazwa" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <select id="newMenuItemCategory" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="food">🍕 Jedzenie</option>
+                  <option value="drink">🥤 Napoje</option>
+                </select>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px;">
+                <input type="number" id="newMenuItemPrice" placeholder="Cena (PLN)" min="1" step="1" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <button class="btn btn-success" onclick="addMenuItem()" style="width: auto; padding: 10px 24px;">➕ Dodaj</button>
+              </div>
+            </div>
+
+            <div id="menuManagementList"></div>
           </div>
         </div>
       </div>

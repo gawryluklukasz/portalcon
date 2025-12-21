@@ -12,23 +12,27 @@ let currentAdminPanel = 'customer';
 // ============================================
 // MENU DATA
 // ============================================
-const menuItems = [
-    { id: 1, name: 'Pizza Margherita', category: 'food', price: 25 },
-    { id: 2, name: 'Pizza Pepperoni', category: 'food', price: 30 },
-    { id: 3, name: 'Burger Classic', category: 'food', price: 22 },
-    { id: 4, name: 'Burger Bacon', category: 'food', price: 28 },
-    { id: 5, name: 'Spaghetti Carbonara', category: 'food', price: 26 },
-    { id: 6, name: 'Spaghetti Bolognese', category: 'food', price: 24 },
-    { id: 7, name: 'Caesar Salad', category: 'food', price: 18 },
-    { id: 8, name: 'Greek Salad', category: 'food', price: 16 },
-    { id: 9, name: 'Coca Cola', category: 'drink', price: 8 },
-    { id: 10, name: 'Sprite', category: 'drink', price: 8 },
-    { id: 11, name: 'Orange Juice', category: 'drink', price: 10 },
-    { id: 12, name: 'Apple Juice', category: 'drink', price: 10 },
-    { id: 13, name: 'Coffee', category: 'drink', price: 12 },
-    { id: 14, name: 'Tea', category: 'drink', price: 10 },
-    { id: 15, name: 'Beer', category: 'drink', price: 15 },
-    { id: 16, name: 'Wine', category: 'drink', price: 20 }
+let menuItems = [];
+let menuUnsubscribe = null;
+
+// Initial menu data for migration
+const initialMenuItems = [
+    { name: 'Pizza Margherita', category: 'food', price: 25, available: true },
+    { name: 'Pizza Pepperoni', category: 'food', price: 30, available: true },
+    { name: 'Burger Classic', category: 'food', price: 22, available: true },
+    { name: 'Burger Bacon', category: 'food', price: 28, available: true },
+    { name: 'Spaghetti Carbonara', category: 'food', price: 26, available: true },
+    { name: 'Spaghetti Bolognese', category: 'food', price: 24, available: true },
+    { name: 'Caesar Salad', category: 'food', price: 18, available: true },
+    { name: 'Greek Salad', category: 'food', price: 16, available: true },
+    { name: 'Coca Cola', category: 'drink', price: 8, available: true },
+    { name: 'Sprite', category: 'drink', price: 8, available: true },
+    { name: 'Orange Juice', category: 'drink', price: 10, available: true },
+    { name: 'Apple Juice', category: 'drink', price: 10, available: true },
+    { name: 'Coffee', category: 'drink', price: 12, available: true },
+    { name: 'Tea', category: 'drink', price: 10, available: true },
+    { name: 'Beer', category: 'drink', price: 15, available: true },
+    { name: 'Wine', category: 'drink', price: 20, available: true }
 ];
 
 // ============================================
@@ -42,10 +46,187 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Firebase loaded successfully');
             db = firebase.firestore();
             console.log('Firestore initialized');
+            initializeMenu();
             initAuth();
         }
     }, 100);
 });
+
+// ============================================
+// MENU MANAGEMENT
+// ============================================
+async function initializeMenu() {
+    console.log('Initializing menu from Firestore...');
+    
+    try {
+        const menuSnapshot = await db.collection('menu').get();
+        
+        if (menuSnapshot.empty) {
+            console.log('Menu collection is empty, migrating initial data...');
+            for (const item of initialMenuItems) {
+                await db.collection('menu').add(item);
+            }
+            console.log('Menu migration completed!');
+        }
+        
+        menuUnsubscribe = db.collection('menu').orderBy('category').orderBy('name')
+            .onSnapshot((snapshot) => {
+                menuItems = [];
+                snapshot.forEach((doc) => {
+                    menuItems.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                console.log('Menu updated:', menuItems.length, 'items');
+                
+                if (currentUser) {
+                    if (userRole === 'admin') {
+                        if (currentAdminPanel === 'customer') {
+                            renderAdminMenu();
+                        } else if (currentAdminPanel === 'menu') {
+                            renderMenuManagement();
+                        }
+                    } else {
+                        renderMenu();
+                    }
+                }
+            }, (error) => {
+                console.error('Error listening to menu changes:', error);
+            });
+    } catch (error) {
+        console.error('Error initializing menu:', error);
+    }
+}
+
+async function addMenuItem() {
+    const name = document.getElementById('newMenuItemName').value.trim();
+    const category = document.getElementById('newMenuItemCategory').value;
+    const price = parseInt(document.getElementById('newMenuItemPrice').value);
+    
+    if (!name) {
+        alert('Podaj nazwę pozycji!');
+        return;
+    }
+    
+    if (!price || price < 1) {
+        alert('Podaj prawidłową cenę!');
+        return;
+    }
+    
+    try {
+        await db.collection('menu').add({
+            name: name,
+            category: category,
+            price: price,
+            available: true
+        });
+        
+        document.getElementById('newMenuItemName').value = '';
+        document.getElementById('newMenuItemPrice').value = '';
+        alert('Pozycja została dodana! ✅');
+    } catch (error) {
+        console.error('Error adding menu item:', error);
+        alert('Błąd dodawania pozycji: ' + error.message);
+    }
+}
+
+async function toggleMenuItemAvailability(itemId, currentAvailability) {
+    try {
+        await db.collection('menu').doc(itemId).update({
+            available: !currentAvailability
+        });
+    } catch (error) {
+        console.error('Error toggling availability:', error);
+        alert('Błąd zmiany dostępności: ' + error.message);
+    }
+}
+
+async function deleteMenuItem(itemId) {
+    if (!confirm('Czy na pewno chcesz usunąć tę pozycję z menu?')) {
+        return;
+    }
+    
+    try {
+        await db.collection('menu').doc(itemId).delete();
+        alert('Pozycja została usunięta!');
+    } catch (error) {
+        console.error('Error deleting menu item:', error);
+        alert('Błąd usuwania pozycji: ' + error.message);
+    }
+}
+
+function renderMenuManagement() {
+    const container = document.getElementById('menuManagementList');
+    if (!container) return;
+    
+    const foodItems = menuItems.filter(item => item.category === 'food');
+    const drinkItems = menuItems.filter(item => item.category === 'drink');
+    
+    let html = '';
+    
+    if (foodItems.length > 0) {
+        html += '<h3 style="margin: 24px 0 12px; color: #333;">🍕 Jedzenie</h3>';
+        html += '<div style="display: grid; gap: 12px;">';
+        foodItems.forEach(item => {
+            html += `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: white; border: 1px solid #ddd; border-radius: 8px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 4px;">${item.name}</div>
+                        <div style="color: #667eea; font-weight: bold;">${item.price} PLN</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button 
+                            class="btn" 
+                            onclick="toggleMenuItemAvailability('${item.id}', ${item.available})" 
+                            style="padding: 8px 16px; width: auto; background: ${item.available ? '#10b981' : '#ef4444'}; color: white;">
+                            ${item.available ? '✓ Dostępne' : '✗ Brak'}
+                        </button>
+                        <button 
+                            class="btn btn-danger" 
+                            onclick="deleteMenuItem('${item.id}')" 
+                            style="padding: 8px 16px; width: auto;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    if (drinkItems.length > 0) {
+        html += '<h3 style="margin: 24px 0 12px; color: #333;">🥤 Napoje</h3>';
+        html += '<div style="display: grid; gap: 12px;">';
+        drinkItems.forEach(item => {
+            html += `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: white; border: 1px solid #ddd; border-radius: 8px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 4px;">${item.name}</div>
+                        <div style="color: #667eea; font-weight: bold;">${item.price} PLN</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button 
+                            class="btn" 
+                            onclick="toggleMenuItemAvailability('${item.id}', ${item.available})" 
+                            style="padding: 8px 16px; width: auto; background: ${item.available ? '#10b981' : '#ef4444'}; color: white;">
+                            ${item.available ? '✓ Dostępne' : '✗ Brak'}
+                        </button>
+                        <button 
+                            class="btn btn-danger" 
+                            onclick="deleteMenuItem('${item.id}')" 
+                            style="padding: 8px 16px; width: auto;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    if (menuItems.length === 0) {
+        html = '<p style="text-align: center; color: #999; padding: 40px;">Brak pozycji w menu. Dodaj pierwszą pozycję powyżej.</p>';
+    }
+    
+    container.innerHTML = html;
+}
 
 // ============================================
 // AUTHENTICATION
@@ -377,19 +558,29 @@ function renderMenuGrid(gridElement, items, cartArray, toggleFunction) {
     items.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'menu-item';
-        itemDiv.onclick = () => toggleFunction(item);
         
         const categoryEmoji = item.category === 'food' ? '🍽️' : '🥤';
         const categoryText = item.category === 'food' ? 'Jedzenie' : 'Napój';
         
-        itemDiv.innerHTML = `
-            <div class="category">${categoryEmoji} ${categoryText}</div>
-            <h3>${item.name}</h3>
-            <div class="price">${item.price} zł</div>
-        `;
-        
-        if (cartArray.some(cartItem => cartItem.id === item.id)) {
-            itemDiv.classList.add('selected');
+        if (item.available) {
+            itemDiv.onclick = () => toggleFunction(item);
+            itemDiv.innerHTML = `
+                <div class="category">${categoryEmoji} ${categoryText}</div>
+                <h3>${item.name}</h3>
+                <div class="price">${item.price} zł</div>
+            `;
+            
+            if (cartArray.some(cartItem => cartItem.id === item.id)) {
+                itemDiv.classList.add('selected');
+            }
+        } else {
+            itemDiv.style.opacity = '0.5';
+            itemDiv.style.cursor = 'not-allowed';
+            itemDiv.innerHTML = `
+                <div class="category">${categoryEmoji} ${categoryText}</div>
+                <h3>${item.name}</h3>
+                <div class="price" style="color: #ef4444; font-weight: bold;">BRAK</div>
+            `;
         }
         
         gridElement.appendChild(itemDiv);
@@ -439,27 +630,35 @@ function setupAdminView() {
 
 function switchAdminPanel(panel) {
     currentAdminPanel = panel;
+    
     const customerPanel = document.getElementById('adminCustomerPanel');
     const waiterPanel = document.getElementById('adminWaiterPanel');
+    const menuPanel = document.getElementById('adminMenuPanel');
     const customerBtn = document.getElementById('adminCustomerBtn');
     const waiterBtn = document.getElementById('adminWaiterBtn');
+    const menuBtn = document.getElementById('adminMenuBtn');
+    
+    customerPanel.style.display = 'none';
+    waiterPanel.style.display = 'none';
+    menuPanel.style.display = 'none';
+    setButtonActive(customerBtn, false);
+    setButtonActive(waiterBtn, false);
+    setButtonActive(menuBtn, false);
     
     if (panel === 'customer') {
         customerPanel.style.display = 'block';
-        waiterPanel.style.display = 'none';
         setButtonActive(customerBtn, true);
-        setButtonActive(waiterBtn, false);
-        
         renderAdminMenu();
         updateAdminCart();
         showAdminCustomerTab('menu');
-    } else {
-        customerPanel.style.display = 'none';
+    } else if (panel === 'waiter') {
         waiterPanel.style.display = 'block';
-        setButtonActive(customerBtn, false);
         setButtonActive(waiterBtn, true);
-        
-        loadAdminWaiterOrders();
+        loadWaiterOrdersForAdmin();
+    } else if (panel === 'menu') {
+        menuPanel.style.display = 'block';
+        setButtonActive(menuBtn, true);
+        renderMenuManagement();
     }
 }
 
