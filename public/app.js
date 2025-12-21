@@ -270,7 +270,7 @@ function renderMenuManagement() {
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: white; border: 1px solid #ddd; border-radius: 8px;">
                     <div style="flex: 1;">
                         <div style="font-weight: bold; color: #333; margin-bottom: 4px;">${item.name}</div>
-                        <div style="color: #667eea; font-weight: bold;">${item.price} PLN</div>
+                        <div style="color: #667eea; font-weight: bold;">${item.price.toFixed(2)} PLN</div>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <button 
@@ -298,7 +298,7 @@ function renderMenuManagement() {
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: white; border: 1px solid #ddd; border-radius: 8px;">
                     <div style="flex: 1;">
                         <div style="font-weight: bold; color: #333; margin-bottom: 4px;">${item.name}</div>
-                        <div style="color: #667eea; font-weight: bold;">${item.price} PLN</div>
+                        <div style="color: #667eea; font-weight: bold;">${item.price.toFixed(2)} PLN</div>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <button 
@@ -597,9 +597,9 @@ function createOrderCard(order, orderId, options = {}) {
         const quantity = item.quantity || 1;
         const itemTotal = item.price * quantity;
         if (quantity > 1) {
-            itemsHtml += `<div class="order-item-line">• ${item.name} <span style="color: #667eea; font-weight: 600;">x${quantity}</span> - ${item.price} zł = ${itemTotal} zł</div>`;
+            itemsHtml += `<div class="order-item-line">• ${item.name} <span style="color: #667eea; font-weight: 600;">x${quantity}</span> - ${item.price.toFixed(2)} zł = ${itemTotal.toFixed(2)} zł</div>`;
         } else {
-            itemsHtml += `<div class="order-item-line">• ${item.name} - ${item.price} zł</div>`;
+            itemsHtml += `<div class="order-item-line">• ${item.name} - ${item.price.toFixed(2)} zł</div>`;
         }
     });
     itemsHtml += '</div>';
@@ -622,7 +622,7 @@ function createOrderCard(order, orderId, options = {}) {
             actionButton = `<div style="color: #10b981; font-weight: 600;">✓ Zamówienie przyjęte</div>`;
         }
     } else {
-        actionButton = `<div style="font-weight: 700; color: #10b981;">${order.total} zł</div>`;
+        actionButton = `<div style="font-weight: 700; color: #10b981;">${order.total.toFixed(2)} zł</div>`;
     }
     
     orderCard.innerHTML = `
@@ -675,7 +675,7 @@ function renderMenuGrid(gridElement, items, cartArray, toggleFunction) {
             itemDiv.innerHTML = `
                 <div class="category">${categoryEmoji} ${categoryText}</div>
                 <h3>${item.name}</h3>
-                <div class="price">${item.price} zł</div>
+                <div class="price">${item.price.toFixed(2)} zł</div>
             `;
             
             if (cartArray.some(cartItem => cartItem.id === item.id)) {
@@ -722,7 +722,7 @@ function updateCartDisplay(cartArray, cartItemsElement, orderFormElement) {
             <div class="cart-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #e5e7eb;">
                 <div style="flex: 1;">
                     <div style="font-weight: 600; color: #333;">${item.name}</div>
-                    <div style="color: #667eea; font-size: 14px;">${item.price} zł x ${item.quantity || 1}</div>
+                    <div style="color: #667eea; font-size: 14px;">${item.price.toFixed(2)} zł x ${item.quantity || 1}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 8px; background: #f3f4f6; border-radius: 6px; padding: 4px;">
@@ -730,7 +730,7 @@ function updateCartDisplay(cartArray, cartItemsElement, orderFormElement) {
                         <span style="min-width: 20px; text-align: center; font-weight: 600;">${item.quantity || 1}</span>
                         <button onclick="${isAdminCart ? 'increaseAdminQuantity' : 'increaseQuantity'}('${item.id}')" style="background: white; border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-weight: bold; color: #667eea;">+</button>
                     </div>
-                    <div style="font-weight: 700; min-width: 60px; text-align: right;">${itemTotal} zł</div>
+                    <div style="font-weight: 700; min-width: 60px; text-align: right;">${itemTotal.toFixed(2)} zł</div>
                 </div>
             </div>
         `;
@@ -739,7 +739,7 @@ function updateCartDisplay(cartArray, cartItemsElement, orderFormElement) {
     html += `
         <div class="cart-item" style="font-weight: 700; border-top: 2px solid #333; margin-top: 8px; padding-top: 16px;">
             <span>Razem:</span>
-            <span>${total} zł</span>
+            <span>${total.toFixed(2)} zł</span>
         </div>
     `;
     
