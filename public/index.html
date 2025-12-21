@@ -565,13 +565,40 @@
                 </select>
               </div>
               <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px;">
-                <input type="number" id="newMenuItemPrice" placeholder="Cena (PLN)" min="1" step="1" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="number" id="newMenuItemPrice" placeholder="Cena (PLN)" min="0.01" step="0.01" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                 <button class="btn btn-success" onclick="addMenuItem()" style="width: auto; padding: 10px 24px;">➕ Dodaj</button>
               </div>
             </div>
 
             <div id="menuManagementList"></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal do edycji pozycji menu -->
+    <div id="editMenuItemModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+      <div style="background: white; padding: 32px; border-radius: 12px; max-width: 500px; width: 90%;">
+        <h2 style="margin-bottom: 24px; color: #333;">✏️ Edytuj Pozycję</h2>
+        <input type="hidden" id="editMenuItemId">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Nazwa</label>
+          <input type="text" id="editMenuItemName" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Kategoria</label>
+          <select id="editMenuItemCategory" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="food">🍕 Jedzenie</option>
+            <option value="drink">🥤 Napoje</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Cena (PLN)</label>
+          <input type="number" id="editMenuItemPrice" min="0.01" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn" onclick="closeEditMenuItemModal()" style="width: auto; padding: 10px 24px; background: #e5e7eb; color: #333;">Anuluj</button>
+          <button class="btn btn-success" onclick="saveEditMenuItem()" style="width: auto; padding: 10px 24px;">💾 Zapisz</button>
         </div>
       </div>
     </div>

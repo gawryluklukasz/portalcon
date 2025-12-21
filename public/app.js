@@ -199,14 +199,14 @@ async function initializeMenu() {
 async function addMenuItem() {
     const name = document.getElementById('newMenuItemName').value.trim();
     const category = document.getElementById('newMenuItemCategory').value;
-    const price = parseInt(document.getElementById('newMenuItemPrice').value);
+    const price = parseFloat(document.getElementById('newMenuItemPrice').value);
     
     if (!name) {
         alert('Podaj nazwę pozycji!');
         return;
     }
     
-    if (!price || price < 1) {
+    if (!price || price <= 0 || isNaN(price)) {
         alert('Podaj prawidłową cenę!');
         return;
     }
@@ -236,6 +236,50 @@ async function toggleMenuItemAvailability(itemId, currentAvailability) {
     } catch (error) {
         console.error('Error toggling availability:', error);
         alert('Błąd zmiany dostępności: ' + error.message);
+    }
+}
+
+function openEditMenuItemModal(itemId, currentName, currentPrice, currentCategory) {
+    const modal = document.getElementById('editMenuItemModal');
+    document.getElementById('editMenuItemId').value = itemId;
+    document.getElementById('editMenuItemName').value = currentName;
+    document.getElementById('editMenuItemPrice').value = currentPrice;
+    document.getElementById('editMenuItemCategory').value = currentCategory;
+    modal.style.display = 'flex';
+}
+
+function closeEditMenuItemModal() {
+    document.getElementById('editMenuItemModal').style.display = 'none';
+}
+
+async function saveEditMenuItem() {
+    const itemId = document.getElementById('editMenuItemId').value;
+    const name = document.getElementById('editMenuItemName').value.trim();
+    const category = document.getElementById('editMenuItemCategory').value;
+    const price = parseFloat(document.getElementById('editMenuItemPrice').value);
+    
+    if (!name) {
+        alert('Podaj nazwę pozycji!');
+        return;
+    }
+    
+    if (!price || price <= 0 || isNaN(price)) {
+        alert('Podaj prawidłową cenę!');
+        return;
+    }
+    
+    try {
+        await db.collection('menu').doc(itemId).update({
+            name: name,
+            category: category,
+            price: price
+        });
+        
+        closeEditMenuItemModal();
+        alert('Pozycja została zaktualizowana! ✅');
+    } catch (error) {
+        console.error('Error updating menu item:', error);
+        alert('Błąd aktualizacji pozycji: ' + error.message);
     }
 }
 
@@ -280,6 +324,10 @@ function renderMenuManagement() {
                             ${item.available ? '✓ Dostępne' : '✗ Brak'}
                         </button>
                         <button 
+                            class="btn" 
+                            onclick="openEditMenuItemModal('${item.id}', '${item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', ${item.price}, '${item.category}')" 
+                            style="padding: 8px 16px; width: auto; background: #667eea; color: white;">✏️ Edytuj</button>
+                        <button 
                             class="btn btn-danger" 
                             onclick="deleteMenuItem('${item.id}')" 
                             style="padding: 8px 16px; width: auto;">🗑️</button>
@@ -307,6 +355,10 @@ function renderMenuManagement() {
                             style="padding: 8px 16px; width: auto; background: ${item.available ? '#10b981' : '#ef4444'}; color: white;">
                             ${item.available ? '✓ Dostępne' : '✗ Brak'}
                         </button>
+                        <button 
+                            class="btn" 
+                            onclick="openEditMenuItemModal('${item.id}', '${item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', ${item.price}, '${item.category}')" 
+                            style="padding: 8px 16px; width: auto; background: #667eea; color: white;">✏️ Edytuj</button>
                         <button 
                             class="btn btn-danger" 
                             onclick="deleteMenuItem('${item.id}')" 
