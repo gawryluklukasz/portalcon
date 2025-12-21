@@ -349,6 +349,42 @@
       <div id="loginView" class="view">
         <div class="card login-view">
           <h1>🍽️ System Zamówień</h1>
+          
+          <div id="emailLoginForm">
+            <h3 id="emailFormTitle" style="text-align: center; margin-bottom: 20px; color: #666;">Zaloguj się</h3>
+            
+            <div class="form-group">
+              <label for="loginEmail">Email</label>
+              <input type="email" id="loginEmail" placeholder="twoj@email.com" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="loginPassword">Hasło</label>
+              <input type="password" id="loginPassword" placeholder="••••••••" required>
+            </div>
+            
+            <div id="registerFields" style="display: none;">
+              <div class="form-group">
+                <label for="registerName">Imię i nazwisko</label>
+                <input type="text" id="registerName" placeholder="Jan Kowalski">
+              </div>
+              
+              <div class="form-group">
+                <label for="registerPasswordConfirm">Potwierdź hasło</label>
+                <input type="password" id="registerPasswordConfirm" placeholder="••••••••">
+              </div>
+            </div>
+            
+            <button class="btn btn-success" onclick="emailAuth()" id="emailAuthBtn">🔐 Zaloguj się</button>
+            
+            <div style="text-align: center; margin: 16px 0; color: #666;">
+              <span id="toggleAuthText">Nie masz konta?</span>
+              <a href="#" onclick="toggleAuthMode(); return false;" style="color: #667eea; font-weight: 600; text-decoration: none; margin-left: 4px;" id="toggleAuthLink">Zarejestruj się</a>
+            </div>
+            
+            <div style="text-align: center; margin: 24px 0; color: #999;">lub</div>
+          </div>
+          
           <button class="btn btn-primary" onclick="googleLogin()">
             <svg width="20" height="20" viewBox="0 0 20 20">
               <path fill="currentColor" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"/>

@@ -2,6 +2,7 @@ let db;
 let currentUser = null;
 let userRole = null;
 let cart = [];
+let isRegisterMode = false;
 
 const menuItems = [
     { id: 1, name: 'Pizza Margherita', category: 'food', price: 25 },
@@ -91,6 +92,127 @@ function showView(viewId) {
         view.classList.remove('active');
     });
     document.getElementById(viewId).classList.add('active');
+}
+
+function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    const registerFields = document.getElementById('registerFields');
+    const emailFormTitle = document.getElementById('emailFormTitle');
+    const emailAuthBtn = document.getElementById('emailAuthBtn');
+    const toggleAuthText = document.getElementById('toggleAuthText');
+    const toggleAuthLink = document.getElementById('toggleAuthLink');
+    
+    if (isRegisterMode) {
+        registerFields.style.display = 'block';
+        emailFormTitle.textContent = 'Zarejestruj się';
+        emailAuthBtn.innerHTML = '✏️ Zarejestruj się';
+        toggleAuthText.textContent = 'Masz już konto?';
+        toggleAuthLink.textContent = 'Zaloguj się';
+    } else {
+        registerFields.style.display = 'none';
+        emailFormTitle.textContent = 'Zaloguj się';
+        emailAuthBtn.innerHTML = '🔐 Zaloguj się';
+        toggleAuthText.textContent = 'Nie masz konta?';
+        toggleAuthLink.textContent = 'Zarejestruj się';
+    }
+}
+
+function emailAuth() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!email || !password) {
+        alert('Wypełnij email i hasło!');
+        return;
+    }
+    
+    if (isRegisterMode) {
+        registerWithEmail(email, password);
+    } else {
+        loginWithEmail(email, password);
+    }
+}
+
+async function registerWithEmail(email, password) {
+    const name = document.getElementById('registerName').value.trim();
+    const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+    
+    if (!name) {
+        alert('Podaj imię i nazwisko!');
+        return;
+    }
+    
+    if (password !== passwordConfirm) {
+        alert('Hasła nie są takie same!');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('Hasło musi mieć minimum 6 znaków!');
+        return;
+    }
+    
+    try {
+        const result = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        await result.user.updateProfile({
+            displayName: name
+        });
+        console.log('Registration successful', result.user);
+        alert('Rejestracja zakończona! Możesz się teraz zalogować.');
+        
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('registerName').value = '';
+        document.getElementById('registerPasswordConfirm').value = '';
+        toggleAuthMode();
+    } catch (error) {
+        console.error('Registration error:', error);
+        let errorMessage = 'Błąd rejestracji: ';
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                errorMessage += 'Ten email jest już używany!';
+                break;
+            case 'auth/invalid-email':
+                errorMessage += 'Nieprawidłowy adres email!';
+                break;
+            case 'auth/weak-password':
+                errorMessage += 'Hasło jest za słabe!';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        alert(errorMessage);
+    }
+}
+
+function loginWithEmail(email, password) {
+    firebase.auth().signInWithEmailAndPassword(email, password)
+        .then((result) => {
+            console.log('Login successful', result.user);
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        })
+        .catch((error) => {
+            console.error('Login error:', error);
+            let errorMessage = 'Błąd logowania: ';
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    errorMessage += 'Nie znaleziono użytkownika!';
+                    break;
+                case 'auth/wrong-password':
+                    errorMessage += 'Nieprawidłowe hasło!';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage += 'Nieprawidłowy adres email!';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage += 'Za dużo prób logowania. Spróbuj później.';
+                    break;
+                default:
+                    errorMessage += error.message;
+            }
+            alert(errorMessage);
+        });
 }
 
 function googleLogin() {
