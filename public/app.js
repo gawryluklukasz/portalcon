@@ -978,7 +978,7 @@ function loadAdminCustomerOrders() {
     console.log('Loading admin customer orders for:', currentUser.uid);
     db.collection('orders')
         .where('userId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
+        .orderBy('createdAt', 'asc')
         .onSnapshot((snapshot) => {
             console.log('Admin customer orders loaded:', snapshot.docs.length);
             renderAdminCustomerOrders(snapshot.docs);
@@ -992,7 +992,7 @@ function loadAdminCustomerOrders() {
                         const docs = snapshot.docs.sort((a, b) => {
                             const aTime = a.data().createdAt?.seconds || 0;
                             const bTime = b.data().createdAt?.seconds || 0;
-                            return bTime - aTime;
+                            return aTime - bTime;
                         });
                         console.log('Admin customer orders loaded (manual sort):', docs.length);
                         renderAdminCustomerOrders(docs);
@@ -1008,7 +1008,7 @@ function renderAdminCustomerOrders(orderDocs) {
 
 function loadAdminWaiterOrders() {
     db.collection('orders')
-        .orderBy('createdAt', 'desc')
+        .orderBy('createdAt', 'asc')
         .onSnapshot((snapshot) => {
             renderAdminWaiterOrders(snapshot.docs);
         });
@@ -1081,7 +1081,7 @@ function loadCustomerOrders() {
     console.log('Loading customer orders for:', currentUser.uid);
     db.collection('orders')
         .where('userId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
+        .orderBy('createdAt', 'asc')
         .onSnapshot((snapshot) => {
             console.log('Customer orders loaded:', snapshot.docs.length);
             renderCustomerOrders(snapshot.docs);
@@ -1095,7 +1095,7 @@ function loadCustomerOrders() {
                         const docs = snapshot.docs.sort((a, b) => {
                             const aTime = a.data().createdAt?.seconds || 0;
                             const bTime = b.data().createdAt?.seconds || 0;
-                            return bTime - aTime;
+                            return aTime - bTime;
                         });
                         console.log('Customer orders loaded (manual sort):', docs.length);
                         renderCustomerOrders(docs);
@@ -1221,7 +1221,7 @@ function setupWaiterView() {
 
 function loadOrders() {
     db.collection('orders')
-        .orderBy('createdAt', 'desc')
+        .orderBy('createdAt', 'asc')
         .onSnapshot((snapshot) => {
             renderOrders(snapshot.docs);
         });
