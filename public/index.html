@@ -362,6 +362,29 @@
         color: white;
       }
 
+      .user-filter-select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        color: #333;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .user-filter-select:hover {
+        border-color: #667eea;
+      }
+
+      .user-filter-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
       @media (max-width: 768px) {
         .menu-grid {
           grid-template-columns: 1fr;
@@ -510,6 +533,15 @@
         <div class="card">
           <h2 style="margin-bottom: 16px; color: #333;">Zamówienia</h2>
           
+          <div style="margin-bottom: 16px;">
+            <label for="waiterUserFilter" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600;">
+              👤 Filtruj według użytkownika:
+            </label>
+            <select id="waiterUserFilter" onchange="setWaiterUserFilter(this.value)" class="user-filter-select">
+              <option value="all">Wszyscy użytkownicy</option>
+            </select>
+          </div>
+          
           <div class="filter-buttons" style="display: flex; gap: 12px; margin-bottom: 24px;">
             <button class="filter-btn active" id="waiterFilterAll" onclick="setWaiterOrderFilter('all')">
               📋 Wszystkie
@@ -602,6 +634,15 @@
         <div id="adminWaiterPanel" class="admin-panel" style="display: none;">
           <div class="card">
             <h2 style="margin-bottom: 16px; color: #333;">Zamówienia</h2>
+            
+            <div style="margin-bottom: 16px;">
+              <label for="adminWaiterUserFilter" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600;">
+                👤 Filtruj według użytkownika:
+              </label>
+              <select id="adminWaiterUserFilter" onchange="setAdminWaiterUserFilter(this.value)" class="user-filter-select">
+                <option value="all">Wszyscy użytkownicy</option>
+              </select>
+            </div>
             
             <div class="filter-buttons" style="display: flex; gap: 12px; margin-bottom: 24px;">
               <button class="filter-btn active" id="adminWaiterFilterAll" onclick="setAdminWaiterOrderFilter('all')">

@@ -12,6 +12,8 @@ let kitchenOpen = true;
 let kitchenStatusUnsubscribe = null;
 let waiterOrderFilter = 'all';
 let adminWaiterOrderFilter = 'all';
+let waiterUserFilter = 'all';
+let adminWaiterUserFilter = 'all';
 
 // ============================================
 // MENU DATA
@@ -700,15 +702,27 @@ function createOrderCard(order, orderId, options = {}) {
 
 function renderOrdersList(orderDocs, listElement, options = {}) {
     const filterStatus = options.filterStatus || 'all';
+    const filterUserId = options.filterUserId || 'all';
     
-    const filteredDocs = filterStatus === 'all' 
-        ? orderDocs 
-        : orderDocs.filter(doc => doc.data().status === filterStatus);
+    let filteredDocs = orderDocs;
+    
+    if (filterStatus !== 'all') {
+        filteredDocs = filteredDocs.filter(doc => doc.data().status === filterStatus);
+    }
+    
+    if (filterUserId !== 'all') {
+        filteredDocs = filteredDocs.filter(doc => doc.data().userId === filterUserId);
+    }
     
     if (filteredDocs.length === 0) {
-        const message = filterStatus === 'all' 
-            ? 'Brak zamówień' 
-            : `Brak zamówień ze statusem "${filterStatus === 'pending' ? 'oczekujące' : 'zaakceptowane'}"`;
+        let message = 'Brak zamówień';
+        if (filterStatus !== 'all' && filterUserId !== 'all') {
+            message = 'Brak zamówień dla wybranych filtrów';
+        } else if (filterStatus !== 'all') {
+            message = `Brak zamówień ze statusem "${filterStatus === 'pending' ? 'oczekujące' : 'zaakceptowane'}"`;
+        } else if (filterUserId !== 'all') {
+            message = 'Brak zamówień dla wybranego użytkownika';
+        }
         listElement.innerHTML = `<div class="cart-empty">${message}</div>`;
         return;
     }
@@ -1016,7 +1030,21 @@ function loadAdminWaiterOrders() {
 
 function renderAdminWaiterOrders(orderDocs) {
     const ordersList = document.getElementById('adminWaiterOrdersList');
-    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true, filterStatus: adminWaiterOrderFilter });
+    
+    // Buduj listę użytkowników PRZED filtrowaniem
+    buildUserFilterList(orderDocs, 'adminWaiterUserFilter');
+    
+    renderOrdersList(orderDocs, ordersList, { 
+        showUserInfo: true, 
+        showActions: true, 
+        filterStatus: adminWaiterOrderFilter,
+        filterUserId: adminWaiterUserFilter 
+    });
+}
+
+function setAdminWaiterUserFilter(userId) {
+    adminWaiterUserFilter = userId;
+    loadAdminWaiterOrders();
 }
 
 function setAdminWaiterOrderFilter(filter) {
@@ -1229,7 +1257,50 @@ function loadOrders() {
 
 function renderOrders(orderDocs) {
     const ordersList = document.getElementById('ordersList');
-    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true, filterStatus: waiterOrderFilter });
+    
+    // Buduj listę użytkowników PRZED filtrowaniem
+    buildUserFilterList(orderDocs, 'waiterUserFilter');
+    
+    renderOrdersList(orderDocs, ordersList, { 
+        showUserInfo: true, 
+        showActions: true, 
+        filterStatus: waiterOrderFilter,
+        filterUserId: waiterUserFilter 
+    });
+}
+
+function buildUserFilterList(orderDocs, selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    
+    const users = new Map();
+    orderDocs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId && data.userName) {
+            users.set(data.userId, data.userName);
+        }
+    });
+    
+    const currentValue = select.value;
+    select.innerHTML = '<option value="all">Wszyscy użytkownicy</option>';
+    
+    Array.from(users.entries())
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .forEach(([userId, userName]) => {
+            const option = document.createElement('option');
+            option.value = userId;
+            option.textContent = userName;
+            select.appendChild(option);
+        });
+    
+    if (currentValue && users.has(currentValue)) {
+        select.value = currentValue;
+    }
+}
+
+function setWaiterUserFilter(userId) {
+    waiterUserFilter = userId;
+    loadOrders();
 }
 
 function setWaiterOrderFilter(filter) {
