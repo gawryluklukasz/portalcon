@@ -329,6 +329,39 @@
         font-size: 18px;
       }
 
+      .filter-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .filter-btn {
+        padding: 10px 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        color: #333;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .filter-btn:hover {
+        border-color: #667eea;
+        background: #f5f7ff;
+        transform: translateY(-2px);
+      }
+
+      .filter-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+      }
+
       @media (max-width: 768px) {
         .menu-grid {
           grid-template-columns: 1fr;
@@ -338,6 +371,15 @@
           flex-direction: column;
           gap: 16px;
           text-align: center;
+        }
+
+        .filter-buttons {
+          flex-direction: column;
+        }
+
+        .filter-btn {
+          width: 100%;
+          justify-content: center;
         }
       }
     </style>
@@ -466,7 +508,20 @@
         </div>
 
         <div class="card">
-          <h2 style="margin-bottom: 24px; color: #333;">Zamówienia</h2>
+          <h2 style="margin-bottom: 16px; color: #333;">Zamówienia</h2>
+          
+          <div class="filter-buttons" style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="filter-btn active" id="waiterFilterAll" onclick="setWaiterOrderFilter('all')">
+              📋 Wszystkie
+            </button>
+            <button class="filter-btn" id="waiterFilterPending" onclick="setWaiterOrderFilter('pending')">
+              ⏳ Oczekujące
+            </button>
+            <button class="filter-btn" id="waiterFilterAccepted" onclick="setWaiterOrderFilter('accepted')">
+              ✅ Zaakceptowane
+            </button>
+          </div>
+          
           <div id="ordersList" class="orders-list"></div>
         </div>
       </div>
@@ -546,7 +601,20 @@
 
         <div id="adminWaiterPanel" class="admin-panel" style="display: none;">
           <div class="card">
-            <h2 style="margin-bottom: 24px; color: #333;">Zamówienia</h2>
+            <h2 style="margin-bottom: 16px; color: #333;">Zamówienia</h2>
+            
+            <div class="filter-buttons" style="display: flex; gap: 12px; margin-bottom: 24px;">
+              <button class="filter-btn active" id="adminWaiterFilterAll" onclick="setAdminWaiterOrderFilter('all')">
+                📋 Wszystkie
+              </button>
+              <button class="filter-btn" id="adminWaiterFilterPending" onclick="setAdminWaiterOrderFilter('pending')">
+                ⏳ Oczekujące
+              </button>
+              <button class="filter-btn" id="adminWaiterFilterAccepted" onclick="setAdminWaiterOrderFilter('accepted')">
+                ✅ Zaakceptowane
+              </button>
+            </div>
+            
             <div id="adminWaiterOrdersList" class="orders-list"></div>
           </div>
         </div>

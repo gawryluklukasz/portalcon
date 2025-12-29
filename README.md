@@ -18,6 +18,7 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 
 ### Dla Kelnerów
 - 👀 Podgląd wszystkich zamówień w czasie rzeczywistym
+- 🔍 Filtrowanie zamówień po statusie (wszystkie, oczekujące, zaakceptowane)
 - ✅ Przyjmowanie zamówień (zmiana statusu)
 - 📍 Informacja o numerze stolika dla każdego zamówienia
 - 👤 Dane klienta przy każdym zamówieniu

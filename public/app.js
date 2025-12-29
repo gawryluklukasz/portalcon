@@ -10,6 +10,8 @@ let isRegisterMode = false;
 let currentAdminPanel = 'customer';
 let kitchenOpen = true;
 let kitchenStatusUnsubscribe = null;
+let waiterOrderFilter = 'all';
+let adminWaiterOrderFilter = 'all';
 
 // ============================================
 // MENU DATA
@@ -697,13 +699,22 @@ function createOrderCard(order, orderId, options = {}) {
 }
 
 function renderOrdersList(orderDocs, listElement, options = {}) {
-    if (orderDocs.length === 0) {
-        listElement.innerHTML = '<div class="cart-empty">Brak zamówień</div>';
+    const filterStatus = options.filterStatus || 'all';
+    
+    const filteredDocs = filterStatus === 'all' 
+        ? orderDocs 
+        : orderDocs.filter(doc => doc.data().status === filterStatus);
+    
+    if (filteredDocs.length === 0) {
+        const message = filterStatus === 'all' 
+            ? 'Brak zamówień' 
+            : `Brak zamówień ze statusem "${filterStatus === 'pending' ? 'oczekujące' : 'zaakceptowane'}"`;
+        listElement.innerHTML = `<div class="cart-empty">${message}</div>`;
         return;
     }
     
     listElement.innerHTML = '';
-    orderDocs.forEach((doc) => {
+    filteredDocs.forEach((doc) => {
         const orderCard = createOrderCard(doc.data(), doc.id, options);
         listElement.appendChild(orderCard);
     });
@@ -1005,7 +1016,25 @@ function loadAdminWaiterOrders() {
 
 function renderAdminWaiterOrders(orderDocs) {
     const ordersList = document.getElementById('adminWaiterOrdersList');
-    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true });
+    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true, filterStatus: adminWaiterOrderFilter });
+}
+
+function setAdminWaiterOrderFilter(filter) {
+    adminWaiterOrderFilter = filter;
+    
+    const allBtn = document.getElementById('adminWaiterFilterAll');
+    const pendingBtn = document.getElementById('adminWaiterFilterPending');
+    const acceptedBtn = document.getElementById('adminWaiterFilterAccepted');
+    
+    allBtn.classList.remove('active');
+    pendingBtn.classList.remove('active');
+    acceptedBtn.classList.remove('active');
+    
+    if (filter === 'all') allBtn.classList.add('active');
+    else if (filter === 'pending') pendingBtn.classList.add('active');
+    else if (filter === 'accepted') acceptedBtn.classList.add('active');
+    
+    loadAdminWaiterOrders();
 }
 
 // ============================================
@@ -1200,7 +1229,25 @@ function loadOrders() {
 
 function renderOrders(orderDocs) {
     const ordersList = document.getElementById('ordersList');
-    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true });
+    renderOrdersList(orderDocs, ordersList, { showUserInfo: true, showActions: true, filterStatus: waiterOrderFilter });
+}
+
+function setWaiterOrderFilter(filter) {
+    waiterOrderFilter = filter;
+    
+    const allBtn = document.getElementById('waiterFilterAll');
+    const pendingBtn = document.getElementById('waiterFilterPending');
+    const acceptedBtn = document.getElementById('waiterFilterAccepted');
+    
+    allBtn.classList.remove('active');
+    pendingBtn.classList.remove('active');
+    acceptedBtn.classList.remove('active');
+    
+    if (filter === 'all') allBtn.classList.add('active');
+    else if (filter === 'pending') pendingBtn.classList.add('active');
+    else if (filter === 'accepted') acceptedBtn.classList.add('active');
+    
+    loadOrders();
 }
 
 async function acceptOrder(orderId) {
