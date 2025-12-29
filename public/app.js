@@ -978,7 +978,7 @@ function loadAdminCustomerOrders() {
     console.log('Loading admin customer orders for:', currentUser.uid);
     db.collection('orders')
         .where('userId', '==', currentUser.uid)
-        .orderBy('createdAt', 'asc')
+        .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
             console.log('Admin customer orders loaded:', snapshot.docs.length);
             renderAdminCustomerOrders(snapshot.docs);
@@ -992,7 +992,7 @@ function loadAdminCustomerOrders() {
                         const docs = snapshot.docs.sort((a, b) => {
                             const aTime = a.data().createdAt?.seconds || 0;
                             const bTime = b.data().createdAt?.seconds || 0;
-                            return aTime - bTime;
+                            return bTime - aTime;
                         });
                         console.log('Admin customer orders loaded (manual sort):', docs.length);
                         renderAdminCustomerOrders(docs);
@@ -1081,7 +1081,7 @@ function loadCustomerOrders() {
     console.log('Loading customer orders for:', currentUser.uid);
     db.collection('orders')
         .where('userId', '==', currentUser.uid)
-        .orderBy('createdAt', 'asc')
+        .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
             console.log('Customer orders loaded:', snapshot.docs.length);
             renderCustomerOrders(snapshot.docs);
@@ -1095,7 +1095,7 @@ function loadCustomerOrders() {
                         const docs = snapshot.docs.sort((a, b) => {
                             const aTime = a.data().createdAt?.seconds || 0;
                             const bTime = b.data().createdAt?.seconds || 0;
-                            return aTime - bTime;
+                            return bTime - aTime;
                         });
                         console.log('Customer orders loaded (manual sort):', docs.length);
                         renderCustomerOrders(docs);
@@ -1221,7 +1221,7 @@ function setupWaiterView() {
 
 function loadOrders() {
     db.collection('orders')
-        .orderBy('createdAt', 'asc')
+        .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
             renderOrders(snapshot.docs);
         });
