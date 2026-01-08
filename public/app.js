@@ -1139,7 +1139,7 @@ function updateAdminCart() {
 
 async function placeOrderAsAdmin() {
     if (!kitchenOpen) {
-        alert('🔴 Kuchnia jest obecnie zamknięta. Zamówienia są niedostępne.');
+        alert('🔴 Kuchnia jest obecnie zamknięta.');
         return;
     }
     
@@ -1493,7 +1493,7 @@ function updateCart() {
 
 async function placeOrder() {
     if (!kitchenOpen) {
-        alert('🔴 Kuchnia jest obecnie zamknięta. Zamówienia są niedostępne.');
+        alert('🔴 Kuchnia jest obecnie zamknięta.');
         return;
     }
     
