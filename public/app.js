@@ -439,16 +439,11 @@ function renderAnnouncements() {
         }
         
         const unreadAnnouncements = announcements.filter(a => !readAnnouncements.includes(a.id));
-        const readAnnouncementsList = announcements.filter(a => readAnnouncements.includes(a.id));
         
         let html = '';
         
         unreadAnnouncements.forEach(announcement => {
             html += createAnnouncementHTML(announcement, false);
-        });
-        
-        readAnnouncementsList.forEach(announcement => {
-            html += createAnnouncementHTML(announcement, true);
         });
         
         announcementContainer.innerHTML = html;

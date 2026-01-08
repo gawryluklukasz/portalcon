@@ -36,7 +36,7 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 - 📢 Administrator może tworzyć komunikaty widoczne dla wszystkich użytkowników
 - 🔝 Nieprzeczytane komunikaty wyświetlane na samej górze
 - ✅ Możliwość oznaczenia komunikatu jako przeczytany
-- 📖 Przeczytane komunikaty przesuwane na dół z mniejszą widocznością
+- 👻 Przeczytane komunikaty znikają z widoku
 
 ## Konfiguracja Firebase
 
