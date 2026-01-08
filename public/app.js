@@ -148,7 +148,7 @@ function updateKitchenStatusMessage() {
             existingMessage = document.createElement('div');
             existingMessage.id = 'kitchenClosedMessage';
             existingMessage.style.cssText = 'background: #fee2e2; border: 2px solid #ef4444; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: center; font-weight: bold;';
-            existingMessage.innerHTML = '🔴 Kuchnia jest obecnie zamknięta. Zamówienia są tymczasowo niedostępne.';
+            existingMessage.innerHTML = '🔴 Kuchnia jest obecnie zamknięta.';
             menuTab.insertBefore(existingMessage, menuTab.firstChild);
         }
     } else {
@@ -1045,7 +1045,7 @@ function switchAdminPanel(panel) {
     if (panel === 'customer') {
         customerPanel.style.display = 'block';
         setButtonActive(customerBtn, true);
-        renderAdminMenu();
+        // renderAdminMenu() jest wywoływane automatycznie przez onSnapshot w initializeMenu()
         updateAdminCart();
         showAdminCustomerTab('menu');
     } else if (panel === 'waiter') {
@@ -1275,7 +1275,7 @@ function setupCustomerView() {
     document.getElementById('customerName').textContent = currentUser.displayName;
     document.getElementById('customerAvatar').src = currentUser.photoURL;
     
-    renderMenu();
+    // renderMenu() jest wywoływane automatycznie przez onSnapshot w initializeMenu()
     updateCart();
     restoreLastTableNumber('tableNumber');
     showCustomerTab('menu');
