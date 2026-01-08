@@ -789,29 +789,37 @@ function logout() {
 }
 
 // ============================================
-// HELPER FUNCTIONS - UI
+// HELPER FUNCTIONS - ORDERS
 // ============================================
-function saveLastTableNumber(tableNumber) {
+async function getNextOrderNumber() {
+    const counterRef = db.collection('counters').doc('orders');
+    
     try {
-        localStorage.setItem('lastTableNumber', tableNumber);
-    } catch (e) {
-        console.warn('Could not save table number to localStorage:', e);
+        const result = await db.runTransaction(async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            
+            let nextNumber;
+            if (!counterDoc.exists) {
+                nextNumber = 1;
+                transaction.set(counterRef, { current: 1 });
+            } else {
+                nextNumber = counterDoc.data().current + 1;
+                transaction.update(counterRef, { current: nextNumber });
+            }
+            
+            return nextNumber;
+        });
+        
+        return result;
+    } catch (error) {
+        console.error('Error getting next order number:', error);
+        return Date.now();
     }
 }
 
-function restoreLastTableNumber(elementId) {
-    try {
-        const lastTableNumber = localStorage.getItem('lastTableNumber');
-        if (lastTableNumber) {
-            const selectElement = document.getElementById(elementId);
-            if (selectElement) {
-                selectElement.value = lastTableNumber;
-            }
-        }
-    } catch (e) {
-        console.warn('Could not restore table number from localStorage:', e);
-    }
-}
+// ============================================
+// HELPER FUNCTIONS - UI
+// ============================================
 
 function setButtonActive(button, isActive) {
     if (isActive) {
@@ -829,9 +837,20 @@ function createOrderCard(order, orderId, options = {}) {
     const orderCard = document.createElement('div');
     orderCard.className = 'order-card';
     
-    const statusClass = order.status === 'pending' ? 'status-pending' : 'status-accepted';
-    const statusIcon = order.status === 'pending' ? '⏳' : '✅';
-    const statusText = order.status === 'pending' ? 'Oczekuje' : 'Przyjęte';
+    let statusClass, statusIcon, statusText;
+    if (order.status === 'pending') {
+        statusClass = 'status-pending';
+        statusIcon = '⏳';
+        statusText = 'Oczekuje';
+    } else if (order.status === 'ready') {
+        statusClass = 'status-ready';
+        statusIcon = '🎉';
+        statusText = 'Gotowy do odbioru';
+    } else {
+        statusClass = 'status-accepted';
+        statusIcon = '✅';
+        statusText = 'Przyjęte';
+    }
     
     let userInfoHtml = '';
     if (showUserInfo) {
@@ -869,16 +888,20 @@ function createOrderCard(order, orderId, options = {}) {
     if (showActions) {
         if (order.status === 'pending') {
             actionButton = `<button class="btn btn-success" style="width: auto; padding: 8px 16px;" onclick="acceptOrder('${orderId}')">✓ Przyjmij</button>`;
-        } else {
-            actionButton = `<div style="color: #10b981; font-weight: 600;">✓ Zamówienie przyjęte</div>`;
+        } else if (order.status === 'accepted') {
+            actionButton = `<button class="btn btn-warning" style="width: auto; padding: 8px 16px;" onclick="markOrderReady('${orderId}')">🎉 Gotowy do odbioru</button>`;
+        } else if (order.status === 'ready') {
+            actionButton = `<div style="color: #f59e0b; font-weight: 600;">🎉 Gotowy do odbioru</div>`;
         }
     } else {
         actionButton = `<div style="font-weight: 700; color: #10b981;">${order.total.toFixed(2)} zł</div>`;
     }
     
+    const displayNumber = order.number || orderId.substring(0, 6);
+    
     orderCard.innerHTML = `
         <div class="order-header">
-            <div class="order-number">Zamówienie #${orderId.substring(0, 6)}</div>
+            <div class="order-number">Zamówienie #${displayNumber}</div>
             <div class="order-status ${statusClass}">${statusIcon} ${statusText}</div>
         </div>
         ${userInfoHtml}
@@ -887,7 +910,6 @@ function createOrderCard(order, orderId, options = {}) {
             ${noteHtml}
         </div>
         <div class="order-footer">
-            <div class="table-number">🪑 Stolik ${order.tableNumber}</div>
             ${actionButton}
         </div>
     `;
@@ -914,7 +936,12 @@ function renderOrdersList(orderDocs, listElement, options = {}) {
         if (filterStatus !== 'all' && filterUserId !== 'all') {
             message = 'Brak zamówień dla wybranych filtrów';
         } else if (filterStatus !== 'all') {
-            message = `Brak zamówień ze statusem "${filterStatus === 'pending' ? 'oczekujące' : 'zaakceptowane'}"`;
+            const statusNames = {
+                'pending': 'oczekujące',
+                'accepted': 'przyjęte',
+                'ready': 'gotowe do odbioru'
+            };
+            message = `Brak zamówień ze statusem "${statusNames[filterStatus] || filterStatus}"`;
         } else if (filterUserId !== 'all') {
             message = 'Brak zamówień dla wybranego użytkownika';
         }
@@ -1140,9 +1167,6 @@ function updateAdminCart() {
     const orderForm = document.getElementById('adminOrderForm');
     updateCartDisplay(adminCart, cartItems, orderForm);
     renderAdminMenu();
-    if (adminCart.length > 0) {
-        restoreLastTableNumber('adminTableNumber');
-    }
 }
 
 async function placeOrderAsAdmin() {
@@ -1151,13 +1175,7 @@ async function placeOrderAsAdmin() {
         return;
     }
     
-    const tableNumber = document.getElementById('adminTableNumber').value;
     const note = document.getElementById('adminOrderNote').value.trim();
-    
-    if (!tableNumber) {
-        alert('Wybierz numer stolika!');
-        return;
-    }
     
     if (adminCart.length === 0) {
         alert('Koszyk jest pusty!');
@@ -1165,13 +1183,14 @@ async function placeOrderAsAdmin() {
     }
     
     try {
+        const orderNumber = await getNextOrderNumber();
         const total = adminCart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
         
         const orderData = {
+            number: orderNumber,
             userId: currentUser.uid,
             userName: currentUser.displayName,
             userEmail: currentUser.email,
-            tableNumber: parseInt(tableNumber),
             items: adminCart,
             total: total,
             status: 'pending',
@@ -1186,9 +1205,7 @@ async function placeOrderAsAdmin() {
         
         alert('Zamówienie zostało złożone! ✅');
         
-        saveLastTableNumber(tableNumber);
         adminCart = [];
-        document.getElementById('adminTableNumber').value = '';
         document.getElementById('adminOrderNote').value = '';
         updateAdminCart();
         showAdminCustomerTab('orders');
@@ -1263,14 +1280,17 @@ function setAdminWaiterOrderFilter(filter) {
     const allBtn = document.getElementById('adminWaiterFilterAll');
     const pendingBtn = document.getElementById('adminWaiterFilterPending');
     const acceptedBtn = document.getElementById('adminWaiterFilterAccepted');
+    const readyBtn = document.getElementById('adminWaiterFilterReady');
     
     allBtn.classList.remove('active');
     pendingBtn.classList.remove('active');
     acceptedBtn.classList.remove('active');
+    readyBtn.classList.remove('active');
     
     if (filter === 'all') allBtn.classList.add('active');
     else if (filter === 'pending') pendingBtn.classList.add('active');
     else if (filter === 'accepted') acceptedBtn.classList.add('active');
+    else if (filter === 'ready') readyBtn.classList.add('active');
     
     loadAdminWaiterOrders();
 }
@@ -1285,7 +1305,6 @@ function setupCustomerView() {
     
     // renderMenu() jest wywoływane automatycznie przez onSnapshot w initializeMenu()
     updateCart();
-    restoreLastTableNumber('tableNumber');
     showCustomerTab('menu');
     updateKitchenStatusMessage();
 }
@@ -1494,9 +1513,6 @@ function updateCart() {
     const orderForm = document.getElementById('orderForm');
     updateCartDisplay(cart, cartItems, orderForm);
     renderMenu();
-    if (cart.length > 0) {
-        restoreLastTableNumber('tableNumber');
-    }
 }
 
 async function placeOrder() {
@@ -1505,13 +1521,7 @@ async function placeOrder() {
         return;
     }
     
-    const tableNumber = document.getElementById('tableNumber').value;
     const note = document.getElementById('orderNote').value.trim();
-    
-    if (!tableNumber) {
-        alert('Wybierz numer stolika!');
-        return;
-    }
     
     if (cart.length === 0) {
         alert('Koszyk jest pusty!');
@@ -1519,13 +1529,14 @@ async function placeOrder() {
     }
     
     try {
+        const orderNumber = await getNextOrderNumber();
         const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
         
         const orderData = {
+            number: orderNumber,
             userId: currentUser.uid,
             userName: currentUser.displayName,
             userEmail: currentUser.email,
-            tableNumber: parseInt(tableNumber),
             items: cart,
             total: total,
             status: 'pending',
@@ -1540,9 +1551,7 @@ async function placeOrder() {
         
         alert('Zamówienie zostało złożone! ✅');
         
-        saveLastTableNumber(tableNumber);
         cart = [];
-        document.getElementById('tableNumber').value = '';
         document.getElementById('orderNote').value = '';
         updateCart();
         showCustomerTab('orders');
@@ -1624,14 +1633,17 @@ function setWaiterOrderFilter(filter) {
     const allBtn = document.getElementById('waiterFilterAll');
     const pendingBtn = document.getElementById('waiterFilterPending');
     const acceptedBtn = document.getElementById('waiterFilterAccepted');
+    const readyBtn = document.getElementById('waiterFilterReady');
     
     allBtn.classList.remove('active');
     pendingBtn.classList.remove('active');
     acceptedBtn.classList.remove('active');
+    readyBtn.classList.remove('active');
     
     if (filter === 'all') allBtn.classList.add('active');
     else if (filter === 'pending') pendingBtn.classList.add('active');
     else if (filter === 'accepted') acceptedBtn.classList.add('active');
+    else if (filter === 'ready') readyBtn.classList.add('active');
     
     loadOrders();
 }
@@ -1648,5 +1660,20 @@ async function acceptOrder(orderId) {
     } catch (error) {
         console.error('Error accepting order:', error);
         alert('Błąd przyjmowania zamówienia: ' + error.message);
+    }
+}
+
+async function markOrderReady(orderId) {
+    try {
+        await db.collection('orders').doc(orderId).update({
+            status: 'ready',
+            readyAt: firebase.firestore.FieldValue.serverTimestamp(),
+            readyBy: currentUser.uid
+        });
+        
+        console.log('Order marked as ready:', orderId);
+    } catch (error) {
+        console.error('Error marking order as ready:', error);
+        alert('Błąd oznaczania zamówienia jako gotowe: ' + error.message);
     }
 }

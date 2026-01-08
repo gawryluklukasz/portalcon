@@ -11,22 +11,22 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 
 ### Dla Klientów
 - 📋 Przeglądanie menu (jedzenie i napoje)
-- � Filtrowanie menu po kategorii (wszystko, jedzenie, napoje)
+- 🎯 Filtrowanie menu po kategorii (wszystko, jedzenie, napoje)
 - 🔎 Wyszukiwanie pozycji po nazwie
-- �🛒 Dodawanie pozycji do koszyka
+- 🛒 Dodawanie pozycji do koszyka z kontrolą ilości
 - 👇 Przycisk "Przejdź" pojawia się po dodaniu pozycji z menu
 - 📍 Płynne przewijanie do koszyka po kliknięciu przycisku
-- 🪑 Wybór numeru stolika
-- 📦 Składanie zamówień
+- 📦 Składanie zamówień (bez wyboru stolika)
+- 📝 Dodawanie notatek do zamówienia
 - 📜 Historia własnych zamówień
 
 ### Dla Kelnerów
 - 👀 Podgląd wszystkich zamówień w czasie rzeczywistym
-- 🔍 Filtrowanie zamówień po statusie (wszystkie, oczekujące, zaakceptowane)
+- 🔍 Filtrowanie zamówień po statusie (wszystkie, oczekujące, przyjęte, gotowe)
 - 👤 Filtrowanie zamówień po użytkowniku (dropdown z listą klientów)
-- ✅ Przyjmowanie zamówień (zmiana statusu)
-- 📍 Informacja o numerze stolika dla każdego zamówienia
-- � Dane klienta przy każdym zamówieniu
+- ✅ Przyjmowanie zamówień (zmiana statusu na "przyjęte")
+- 🎉 Oznaczanie zamówień jako "gotowe do odbioru"
+- 👥 Dane klienta przy każdym zamówieniu
 
 ### Dla Administratorów
 - 👑 Panel administratora z pełną kontrolą
@@ -147,25 +147,37 @@ firebase deploy
 ### Collection: orders
 ```javascript
 {
+  number: number,              // Sekwencyjny numer zamówienia (1, 2, 3...)
   userId: string,
   userName: string,
   userEmail: string,
-  tableNumber: number,
   items: [
     {
-      id: number,
+      id: string,
       name: string,
       category: 'food' | 'drink',
-      price: number
+      price: number,
+      quantity: number
     }
   ],
   total: number,
-  status: 'pending' | 'accepted',
+  note: string (optional),
+  status: 'pending' | 'accepted' | 'ready',
   createdAt: timestamp,
   acceptedAt: timestamp (optional),
-  acceptedBy: string (optional)
+  acceptedBy: string (optional),
+  readyAt: timestamp (optional),
+  readyBy: string (optional)
 }
 ```
+
+### Collection: counters
+```javascript
+{
+  current: number              // Aktualny numer ostatniego zamówienia
+}
+```
+**Uwaga:** Dokument `orders` w kolekcji `counters` jest automatycznie tworzony przy pierwszym zamówieniu.
 
 ## Menu
 
