@@ -695,6 +695,7 @@
             <button class="btn" onclick="switchAdminPanel('waiter')" id="adminWaiterBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">👨‍🍳 Panel Kelnera</button>
             <button class="btn" onclick="switchAdminPanel('menu')" id="adminMenuBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📋 Zarządzanie Menu</button>
             <button class="btn" onclick="switchAdminPanel('announcements')" id="adminAnnouncementsBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📢 Komunikaty</button>
+            <button class="btn" onclick="switchAdminPanel('archive')" id="adminArchiveBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📦 Archiwum</button>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
             <span style="font-weight: 600; color: #333;">Status Kuchni:</span>
@@ -808,6 +809,14 @@
             </div>
 
             <div id="menuManagementList"></div>
+          </div>
+        </div>
+
+        <div id="adminArchivePanel" class="admin-panel" style="display: none;">
+          <div class="card">
+            <h2 style="margin-bottom: 24px; color: #333;">Archiwum Zamówień</h2>
+            <p style="color: #666; margin-bottom: 16px;">Tutaj znajdują się wszystkie zarchiwizowane zamówienia. Możesz je przywrócić klikając przycisk "Przywróć".</p>
+            <div id="archiveList" class="orders-list"></div>
           </div>
         </div>
 

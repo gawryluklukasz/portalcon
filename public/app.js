@@ -832,7 +832,7 @@ function setButtonActive(button, isActive) {
 }
 
 function createOrderCard(order, orderId, options = {}) {
-    const { showUserInfo = false, showActions = false } = options;
+    const { showUserInfo = false, showActions = false, showArchived = false } = options;
     
     const orderCard = document.createElement('div');
     orderCard.className = 'order-card';
@@ -885,13 +885,15 @@ function createOrderCard(order, orderId, options = {}) {
     }
     
     let actionButton = '';
-    if (showActions) {
+    if (showArchived) {
+        actionButton = `<button class="btn btn-primary" style="width: auto; padding: 8px 16px;" onclick="restoreOrder('${orderId}')">↩️ Przywróć</button>`;
+    } else if (showActions) {
         if (order.status === 'pending') {
             actionButton = `<button class="btn btn-success" style="width: auto; padding: 8px 16px;" onclick="acceptOrder('${orderId}')">✓ Przyjmij</button>`;
         } else if (order.status === 'accepted') {
             actionButton = `<button class="btn btn-warning" style="width: auto; padding: 8px 16px;" onclick="markOrderReady('${orderId}')">🎉 Gotowy do odbioru</button>`;
         } else if (order.status === 'ready') {
-            actionButton = `<div style="color: #f59e0b; font-weight: 600;">🎉 Gotowy do odbioru</div>`;
+            actionButton = `<button class="btn" style="width: auto; padding: 8px 16px; background: #6b7280; color: white;" onclick="archiveOrder('${orderId}')">📦 Archiwizuj</button>`;
         }
     } else {
         actionButton = `<div style="font-weight: 700; color: #10b981;">${order.total.toFixed(2)} zł</div>`;
@@ -1063,19 +1065,25 @@ function switchAdminPanel(panel) {
     const waiterPanel = document.getElementById('adminWaiterPanel');
     const menuPanel = document.getElementById('adminMenuPanel');
     const announcementsPanel = document.getElementById('adminAnnouncementsPanel');
-    const customerBtn = document.getElementById('adminCustomerBtn');
-    const waiterBtn = document.getElementById('adminWaiterBtn');
-    const menuBtn = document.getElementById('adminMenuBtn');
-    const announcementsBtn = document.getElementById('adminAnnouncementsBtn');
+    const archivePanel = document.getElementById('adminArchivePanel');
     
     customerPanel.style.display = 'none';
     waiterPanel.style.display = 'none';
     menuPanel.style.display = 'none';
     announcementsPanel.style.display = 'none';
+    if (archivePanel) archivePanel.style.display = 'none';
+    
+    const customerBtn = document.getElementById('adminCustomerBtn');
+    const waiterBtn = document.getElementById('adminWaiterBtn');
+    const menuBtn = document.getElementById('adminMenuBtn');
+    const announcementsBtn = document.getElementById('adminAnnouncementsBtn');
+    const archiveBtn = document.getElementById('adminArchiveBtn');
+    
     setButtonActive(customerBtn, false);
     setButtonActive(waiterBtn, false);
     setButtonActive(menuBtn, false);
     setButtonActive(announcementsBtn, false);
+    if (archiveBtn) setButtonActive(archiveBtn, false);
     
     if (panel === 'customer') {
         customerPanel.style.display = 'block';
@@ -1095,6 +1103,10 @@ function switchAdminPanel(panel) {
         announcementsPanel.style.display = 'block';
         setButtonActive(announcementsBtn, true);
         renderAnnouncementManagement();
+    } else if (panel === 'archive' && archivePanel) {
+        archivePanel.style.display = 'block';
+        if (archiveBtn) setButtonActive(archiveBtn, true);
+        loadArchive();
     }
 }
 
@@ -1221,8 +1233,9 @@ function loadAdminCustomerOrders() {
         .where('userId', '==', currentUser.uid)
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
-            console.log('Admin customer orders loaded:', snapshot.docs.length);
-            renderAdminCustomerOrders(snapshot.docs);
+            const docs = snapshot.docs.filter(doc => !doc.data().archived);
+            console.log('Admin customer orders loaded:', docs.length);
+            renderAdminCustomerOrders(docs);
         }, (error) => {
             console.error('Error loading admin customer orders:', error);
             if (error.code === 'failed-precondition' || error.message.includes('index')) {
@@ -1230,11 +1243,13 @@ function loadAdminCustomerOrders() {
                 db.collection('orders')
                     .where('userId', '==', currentUser.uid)
                     .onSnapshot((snapshot) => {
-                        const docs = snapshot.docs.sort((a, b) => {
-                            const aTime = a.data().createdAt?.seconds || 0;
-                            const bTime = b.data().createdAt?.seconds || 0;
-                            return bTime - aTime;
-                        });
+                        const docs = snapshot.docs
+                            .filter(doc => !doc.data().archived)
+                            .sort((a, b) => {
+                                const aTime = a.data().createdAt?.seconds || 0;
+                                const bTime = b.data().createdAt?.seconds || 0;
+                                return bTime - aTime;
+                            });
                         console.log('Admin customer orders loaded (manual sort):', docs.length);
                         renderAdminCustomerOrders(docs);
                     });
@@ -1251,7 +1266,8 @@ function loadAdminWaiterOrders() {
     db.collection('orders')
         .orderBy('createdAt', 'asc')
         .onSnapshot((snapshot) => {
-            renderAdminWaiterOrders(snapshot.docs);
+            const docs = snapshot.docs.filter(doc => !doc.data().archived);
+            renderAdminWaiterOrders(docs);
         });
 }
 
@@ -1340,8 +1356,9 @@ function loadCustomerOrders() {
         .where('userId', '==', currentUser.uid)
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
-            console.log('Customer orders loaded:', snapshot.docs.length);
-            renderCustomerOrders(snapshot.docs);
+            const docs = snapshot.docs.filter(doc => !doc.data().archived);
+            console.log('Customer orders loaded:', docs.length);
+            renderCustomerOrders(docs);
         }, (error) => {
             console.error('Error loading customer orders:', error);
             if (error.code === 'failed-precondition' || error.message.includes('index')) {
@@ -1349,11 +1366,13 @@ function loadCustomerOrders() {
                 db.collection('orders')
                     .where('userId', '==', currentUser.uid)
                     .onSnapshot((snapshot) => {
-                        const docs = snapshot.docs.sort((a, b) => {
-                            const aTime = a.data().createdAt?.seconds || 0;
-                            const bTime = b.data().createdAt?.seconds || 0;
-                            return bTime - aTime;
-                        });
+                        const docs = snapshot.docs
+                            .filter(doc => !doc.data().archived)
+                            .sort((a, b) => {
+                                const aTime = a.data().createdAt?.seconds || 0;
+                                const bTime = b.data().createdAt?.seconds || 0;
+                                return bTime - aTime;
+                            });
                         console.log('Customer orders loaded (manual sort):', docs.length);
                         renderCustomerOrders(docs);
                     });
@@ -1575,7 +1594,8 @@ function loadOrders() {
     db.collection('orders')
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
-            renderOrders(snapshot.docs);
+            const docs = snapshot.docs.filter(doc => !doc.data().archived);
+            renderOrders(docs);
         });
 }
 
@@ -1676,4 +1696,76 @@ async function markOrderReady(orderId) {
         console.error('Error marking order as ready:', error);
         alert('Błąd oznaczania zamówienia jako gotowe: ' + error.message);
     }
+}
+
+async function archiveOrder(orderId) {
+    try {
+        await db.collection('orders').doc(orderId).update({
+            archived: true,
+            archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            archivedBy: currentUser.uid
+        });
+        
+        console.log('Order archived:', orderId);
+    } catch (error) {
+        console.error('Error archiving order:', error);
+        alert('Błąd archiwizacji zamówienia: ' + error.message);
+    }
+}
+
+async function restoreOrder(orderId) {
+    try {
+        await db.collection('orders').doc(orderId).update({
+            archived: false
+        });
+        
+        console.log('Order restored:', orderId);
+    } catch (error) {
+        console.error('Error restoring order:', error);
+        alert('Błąd przywracania zamówienia: ' + error.message);
+    }
+}
+
+function loadArchive() {
+    db.collection('orders')
+        .where('archived', '==', true)
+        .orderBy('archivedAt', 'desc')
+        .onSnapshot((snapshot) => {
+            renderArchive(snapshot.docs);
+        }, (error) => {
+            console.error('Error loading archive:', error);
+            if (error.code === 'failed-precondition' || error.message.includes('index')) {
+                console.warn('Missing index, loading archive without sorting...');
+                db.collection('orders')
+                    .where('archived', '==', true)
+                    .onSnapshot((snapshot) => {
+                        const docs = snapshot.docs.sort((a, b) => {
+                            const aTime = a.data().archivedAt?.seconds || 0;
+                            const bTime = b.data().archivedAt?.seconds || 0;
+                            return bTime - aTime;
+                        });
+                        renderArchive(docs);
+                    });
+            }
+        });
+}
+
+function renderArchive(orderDocs) {
+    const archiveList = document.getElementById('archiveList');
+    if (!archiveList) return;
+    
+    if (orderDocs.length === 0) {
+        archiveList.innerHTML = '<div class="cart-empty">Brak zarchiwizowanych zamówień</div>';
+        return;
+    }
+    
+    archiveList.innerHTML = '';
+    orderDocs.forEach((doc) => {
+        const orderCard = createOrderCard(doc.data(), doc.id, { 
+            showUserInfo: true, 
+            showActions: false,
+            showArchived: true
+        });
+        archiveList.appendChild(orderCard);
+    });
 }

@@ -33,7 +33,9 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 - 🔄 Przełączanie między widokiem klienta i kelnera
 - 🍽️ Składanie zamówień jako klient
 - 👨‍🍳 Zarządzanie wszystkimi zamówieniami jako kelner
-- 📢 Tworzenie i zarządzanie komunikatami dla wszystkich użytkowników
+- � Archiwizacja zamówień (ukrywa je ze wszystkich list)
+- ↩️ Przeglądanie i przywracanie zarchiwizowanych zamówień
+- � Tworzenie i zarządzanie komunikatami dla wszystkich użytkowników
 - 🗑️ Usuwanie komunikatów
 
 ### Komunikaty
@@ -163,11 +165,14 @@ firebase deploy
   total: number,
   note: string (optional),
   status: 'pending' | 'accepted' | 'ready',
+  archived: boolean (default: false),
   createdAt: timestamp,
   acceptedAt: timestamp (optional),
   acceptedBy: string (optional),
   readyAt: timestamp (optional),
-  readyBy: string (optional)
+  readyBy: string (optional),
+  archivedAt: timestamp (optional),
+  archivedBy: string (optional)
 }
 ```
 
