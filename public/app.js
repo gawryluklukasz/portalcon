@@ -1345,6 +1345,49 @@ function toggleMenuItem(item) {
     }
     
     updateCart();
+    
+    if (cart.length > 0) {
+        showScrollToCartButton();
+    } else {
+        hideScrollToCartButton();
+    }
+}
+
+function showScrollToCartButton() {
+    let scrollButton = document.getElementById('scrollToCartButton');
+    
+    if (!scrollButton) {
+        scrollButton = document.createElement('button');
+        scrollButton.id = 'scrollToCartButton';
+        scrollButton.className = 'scroll-to-cart-btn';
+        scrollButton.innerHTML = '👇 Przejdź';
+        scrollButton.onclick = scrollToCart;
+        document.body.appendChild(scrollButton);
+    }
+    
+    scrollButton.style.display = 'block';
+}
+
+function hideScrollToCartButton() {
+    const scrollButton = document.getElementById('scrollToCartButton');
+    if (scrollButton) {
+        scrollButton.style.display = 'none';
+    }
+}
+
+function scrollToCart() {
+    const cartElement = document.querySelector('.cart');
+    
+    if (cartElement) {
+        cartElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+        });
+        
+        setTimeout(() => {
+            hideScrollToCartButton();
+        }, 1500);
+    }
 }
 
 function increaseQuantity(itemId) {

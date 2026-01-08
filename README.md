@@ -12,6 +12,8 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 ### Dla Klientów
 - 📋 Przeglądanie menu (jedzenie i napoje)
 - 🛒 Dodawanie pozycji do koszyka
+- 👇 Przycisk "Przejdź" pojawia się po dodaniu pozycji z menu
+- 📍 Płynne przewijanie do koszyka po kliknięciu przycisku
 - 🪑 Wybór numeru stolika
 - 📦 Składanie zamówień
 - 📜 Historia własnych zamówień

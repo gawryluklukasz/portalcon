@@ -449,6 +449,48 @@
         white-space: pre-wrap;
       }
 
+      .scroll-to-cart-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        padding: 16px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        z-index: 999;
+        display: none;
+        transition: all 0.3s;
+        animation: bounceIn 0.5s;
+      }
+
+      .scroll-to-cart-btn:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+      }
+
+      .scroll-to-cart-btn:active {
+        transform: translateY(-2px);
+      }
+
+      @keyframes bounceIn {
+        0% {
+          transform: scale(0);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
       @media (max-width: 768px) {
         .menu-grid {
           grid-template-columns: 1fr;
