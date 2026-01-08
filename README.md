@@ -29,6 +29,14 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 - 🔄 Przełączanie między widokiem klienta i kelnera
 - 🍽️ Składanie zamówień jako klient
 - 👨‍🍳 Zarządzanie wszystkimi zamówieniami jako kelner
+- 📢 Tworzenie i zarządzanie komunikatami dla wszystkich użytkowników
+- 🗑️ Usuwanie komunikatów
+
+### Komunikaty
+- 📢 Administrator może tworzyć komunikaty widoczne dla wszystkich użytkowników
+- 🔝 Nieprzeczytane komunikaty wyświetlane na samej górze
+- ✅ Możliwość oznaczenia komunikatu jako przeczytany
+- 📖 Przeczytane komunikaty przesuwane na dół z mniejszą widocznością
 
 ## Konfiguracja Firebase
 

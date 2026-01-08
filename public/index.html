@@ -385,6 +385,70 @@
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
       }
 
+      .announcements-container {
+        margin-bottom: 20px;
+      }
+
+      .announcement {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #667eea;
+        transition: all 0.3s;
+      }
+
+      .announcement.unread {
+        border-left-color: #f59e0b;
+        background: #fffbeb;
+      }
+
+      .announcement.read {
+        border-left-color: #10b981;
+        opacity: 0.8;
+      }
+
+      .announcement-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .announcement-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .announcement.unread .announcement-badge {
+        background: #fef3c7;
+        color: #d97706;
+      }
+
+      .announcement.read .announcement-badge {
+        background: #d1fae5;
+        color: #059669;
+      }
+
+      .announcement-date {
+        font-size: 12px;
+        color: #999;
+      }
+
+      .announcement-content {
+        color: #333;
+        font-size: 15px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+
       @media (max-width: 768px) {
         .menu-grid {
           grid-template-columns: 1fr;
@@ -569,10 +633,11 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
-          <div style="display: flex; gap: 12px;">
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
             <button class="btn btn-primary" onclick="switchAdminPanel('customer')" id="adminCustomerBtn" style="width: auto; padding: 12px 24px; background: #667eea;">🍽️ Panel Klienta</button>
             <button class="btn" onclick="switchAdminPanel('waiter')" id="adminWaiterBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">👨‍🍳 Panel Kelnera</button>
             <button class="btn" onclick="switchAdminPanel('menu')" id="adminMenuBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📋 Zarządzanie Menu</button>
+            <button class="btn" onclick="switchAdminPanel('announcements')" id="adminAnnouncementsBtn" style="width: auto; padding: 12px 24px; background: #e5e7eb; color: #333;">📢 Komunikaty</button>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
             <span style="font-weight: 600; color: #333;">Status Kuchni:</span>
@@ -680,6 +745,22 @@
             </div>
 
             <div id="menuManagementList"></div>
+          </div>
+        </div>
+
+        <div id="adminAnnouncementsPanel" class="admin-panel" style="display: none;">
+          <div class="card">
+            <h2 style="margin-bottom: 24px; color: #333;">Zarządzanie Komunikatami</h2>
+            
+            <div class="form-group" style="margin-bottom: 24px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+              <h3 style="margin-bottom: 16px; color: #333;">Utwórz Nowy Komunikat</h3>
+              <textarea id="announcementMessage" placeholder="Treść komunikatu dla wszystkich użytkowników..." 
+                style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; resize: vertical; min-height: 100px; font-family: inherit; font-size: 14px; margin-bottom: 12px;"></textarea>
+              <button class="btn btn-success" onclick="createAnnouncement()" style="width: auto; padding: 10px 24px;">📢 Wyślij Komunikat</button>
+            </div>
+
+            <h3 style="margin-bottom: 16px; color: #333;">Lista Komunikatów</h3>
+            <div id="announcementManagementList"></div>
           </div>
         </div>
       </div>

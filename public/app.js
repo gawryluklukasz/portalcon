@@ -14,6 +14,9 @@ let waiterOrderFilter = 'all';
 let adminWaiterOrderFilter = 'all';
 let waiterUserFilter = 'all';
 let adminWaiterUserFilter = 'all';
+let announcementsUnsubscribe = null;
+let announcements = [];
+let readAnnouncements = [];
 
 // ============================================
 // MENU DATA
@@ -382,6 +385,191 @@ function renderMenuManagement() {
 }
 
 // ============================================
+// ANNOUNCEMENTS
+// ============================================
+function loadAnnouncements() {
+    if (announcementsUnsubscribe) {
+        announcementsUnsubscribe();
+    }
+    
+    announcementsUnsubscribe = db.collection('announcements')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            announcements = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            loadReadAnnouncements();
+        });
+}
+
+function loadReadAnnouncements() {
+    if (!currentUser) return;
+    
+    db.collection('users').doc(currentUser.uid).get()
+        .then(doc => {
+            if (doc.exists) {
+                readAnnouncements = doc.data().readAnnouncements || [];
+            }
+            renderAnnouncements();
+        })
+        .catch(error => {
+            console.error('Error loading read announcements:', error);
+            readAnnouncements = [];
+            renderAnnouncements();
+        });
+}
+
+function renderAnnouncements() {
+    const containers = ['customerView', 'waiterView', 'adminView'];
+    
+    containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (!container || !container.classList.contains('active')) return;
+        
+        let announcementContainer = container.querySelector('.announcements-container');
+        if (!announcementContainer) {
+            announcementContainer = document.createElement('div');
+            announcementContainer.className = 'announcements-container';
+            const header = container.querySelector('.header');
+            if (header && header.nextSibling) {
+                header.parentNode.insertBefore(announcementContainer, header.nextSibling);
+            }
+        }
+        
+        const unreadAnnouncements = announcements.filter(a => !readAnnouncements.includes(a.id));
+        const readAnnouncementsList = announcements.filter(a => readAnnouncements.includes(a.id));
+        
+        let html = '';
+        
+        unreadAnnouncements.forEach(announcement => {
+            html += createAnnouncementHTML(announcement, false);
+        });
+        
+        readAnnouncementsList.forEach(announcement => {
+            html += createAnnouncementHTML(announcement, true);
+        });
+        
+        announcementContainer.innerHTML = html;
+    });
+}
+
+function createAnnouncementHTML(announcement, isRead) {
+    const date = announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleString('pl-PL') : '';
+    
+    return `
+        <div class="announcement ${isRead ? 'read' : 'unread'}">
+            <div class="announcement-header">
+                <span class="announcement-badge">${isRead ? '📖 Przeczytane' : '📢 Nowe'}</span>
+                <span class="announcement-date">${date}</span>
+            </div>
+            <div class="announcement-content">${announcement.message}</div>
+            ${!isRead ? `
+                <button class="btn btn-primary" onclick="markAnnouncementAsRead('${announcement.id}')" 
+                    style="padding: 8px 16px; width: auto; margin-top: 8px; font-size: 14px;">
+                    ✓ Oznacz jako przeczytane
+                </button>
+            ` : ''}
+        </div>
+    `;
+}
+
+async function markAnnouncementAsRead(announcementId) {
+    if (!currentUser) return;
+    
+    try {
+        const newReadList = [...readAnnouncements, announcementId];
+        await db.collection('users').doc(currentUser.uid).update({
+            readAnnouncements: newReadList
+        });
+        
+        readAnnouncements = newReadList;
+        renderAnnouncements();
+    } catch (error) {
+        console.error('Error marking announcement as read:', error);
+        alert('Błąd oznaczania komunikatu: ' + error.message);
+    }
+}
+
+async function createAnnouncement() {
+    const message = document.getElementById('announcementMessage').value.trim();
+    
+    if (!message) {
+        alert('Wpisz treść komunikatu!');
+        return;
+    }
+    
+    if (!confirm('Czy na pewno chcesz wysłać ten komunikat do wszystkich użytkowników?')) {
+        return;
+    }
+    
+    try {
+        await db.collection('announcements').add({
+            message: message,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: currentUser.uid,
+            createdByName: currentUser.displayName
+        });
+        
+        document.getElementById('announcementMessage').value = '';
+        alert('Komunikat został wysłany! 📢');
+    } catch (error) {
+        console.error('Error creating announcement:', error);
+        alert('Błąd wysyłania komunikatu: ' + error.message);
+    }
+}
+
+async function deleteAnnouncement(announcementId) {
+    if (!confirm('Czy na pewno chcesz usunąć ten komunikat?')) {
+        return;
+    }
+    
+    try {
+        await db.collection('announcements').doc(announcementId).delete();
+        alert('Komunikat został usunięty!');
+    } catch (error) {
+        console.error('Error deleting announcement:', error);
+        alert('Błąd usuwania komunikatu: ' + error.message);
+    }
+}
+
+function renderAnnouncementManagement() {
+    const container = document.getElementById('announcementManagementList');
+    if (!container) return;
+    
+    let html = '';
+    
+    if (announcements.length > 0) {
+        announcements.forEach(announcement => {
+            const date = announcement.createdAt ? new Date(announcement.createdAt.seconds * 1000).toLocaleString('pl-PL') : '';
+            html += `
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
+                                ${date} - ${announcement.createdByName || 'Admin'}
+                            </div>
+                            <div style="color: #333; font-size: 14px;">
+                                ${announcement.message}
+                            </div>
+                        </div>
+                        <button 
+                            class="btn btn-danger" 
+                            onclick="deleteAnnouncement('${announcement.id}')" 
+                            style="padding: 8px 16px; width: auto; margin-left: 12px;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html = '<p style="text-align: center; color: #999; padding: 40px;">Brak komunikatów. Stwórz pierwszy komunikat powyżej.</p>';
+    }
+    
+    container.innerHTML = html;
+}
+
+// ============================================
 // AUTHENTICATION
 // ============================================
 function initAuth() {
@@ -425,6 +613,8 @@ async function checkAndSetUserRole(user) {
 }
 
 function showViewBasedOnRole() {
+    loadAnnouncements();
+    
     if (userRole === 'admin') {
         setupAdminView();
         showView('adminView');
@@ -840,16 +1030,20 @@ function switchAdminPanel(panel) {
     const customerPanel = document.getElementById('adminCustomerPanel');
     const waiterPanel = document.getElementById('adminWaiterPanel');
     const menuPanel = document.getElementById('adminMenuPanel');
+    const announcementsPanel = document.getElementById('adminAnnouncementsPanel');
     const customerBtn = document.getElementById('adminCustomerBtn');
     const waiterBtn = document.getElementById('adminWaiterBtn');
     const menuBtn = document.getElementById('adminMenuBtn');
+    const announcementsBtn = document.getElementById('adminAnnouncementsBtn');
     
     customerPanel.style.display = 'none';
     waiterPanel.style.display = 'none';
     menuPanel.style.display = 'none';
+    announcementsPanel.style.display = 'none';
     setButtonActive(customerBtn, false);
     setButtonActive(waiterBtn, false);
     setButtonActive(menuBtn, false);
+    setButtonActive(announcementsBtn, false);
     
     if (panel === 'customer') {
         customerPanel.style.display = 'block';
@@ -865,6 +1059,10 @@ function switchAdminPanel(panel) {
         menuPanel.style.display = 'block';
         setButtonActive(menuBtn, true);
         renderMenuManagement();
+    } else if (panel === 'announcements') {
+        announcementsPanel.style.display = 'block';
+        setButtonActive(announcementsBtn, true);
+        renderAnnouncementManagement();
     }
 }
 
