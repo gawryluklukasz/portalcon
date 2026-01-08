@@ -25,6 +25,7 @@ let menuSearchText = '';
 // ============================================
 let menuItems = [];
 let menuUnsubscribe = null;
+let menuInitialized = false;
 
 // Initial menu data for migration
 const initialMenuItems = [
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Firebase loaded successfully');
             db = firebase.firestore();
             console.log('Firestore initialized');
-            initializeMenu();
+            // initializeMenu() przeniesione do showViewBasedOnRole() - musi być po zalogowaniu
             initKitchenStatus();
             initAuth();
         }
@@ -162,7 +163,13 @@ function updateKitchenStatusMessage() {
 // MENU MANAGEMENT
 // ============================================
 async function initializeMenu() {
+    if (menuInitialized) {
+        console.log('Menu already initialized, skipping...');
+        return;
+    }
+    
     console.log('Initializing menu from Firestore...');
+    menuInitialized = true;
     
     try {
         const menuSnapshot = await db.collection('menu').get();
@@ -611,6 +618,7 @@ async function checkAndSetUserRole(user) {
 
 function showViewBasedOnRole() {
     loadAnnouncements();
+    initializeMenu();
     
     if (userRole === 'admin') {
         setupAdminView();
