@@ -586,6 +586,25 @@
         <div id="menuTab" class="customer-tab">
           <div class="card">
             <h2 style="margin-bottom: 24px; color: #333;">Wybierz z Menu</h2>
+            
+            <div style="margin-bottom: 24px;">
+              <input type="text" id="menuSearchInput" placeholder="🔍 Szukaj..." 
+                oninput="setMenuSearchText(this.value)" 
+                style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+            
+            <div class="filter-buttons" style="display: flex; gap: 12px; margin-bottom: 24px;">
+              <button class="filter-btn active" id="menuFilterAll" onclick="setMenuCategoryFilter('all')">
+                📋 Wszystko
+              </button>
+              <button class="filter-btn" id="menuFilterFood" onclick="setMenuCategoryFilter('food')">
+                🍕 Jedzenie
+              </button>
+              <button class="filter-btn" id="menuFilterDrink" onclick="setMenuCategoryFilter('drink')">
+                🥤 Napoje
+              </button>
+            </div>
+            
             <div id="menuGrid" class="menu-grid"></div>
           </div>
 
@@ -698,6 +717,25 @@
           <div id="adminMenuTab" class="customer-tab">
             <div class="card">
               <h2 style="margin-bottom: 24px; color: #333;">Wybierz z Menu</h2>
+              
+              <div style="margin-bottom: 24px;">
+                <input type="text" id="adminMenuSearchInput" placeholder="🔍 Szukaj..." 
+                  oninput="setMenuSearchText(this.value)" 
+                  style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+              </div>
+              
+              <div class="filter-buttons" style="display: flex; gap: 12px; margin-bottom: 24px;">
+                <button class="filter-btn active" id="adminMenuFilterAll" onclick="setMenuCategoryFilter('all')">
+                  📋 Wszystko
+                </button>
+                <button class="filter-btn" id="adminMenuFilterFood" onclick="setMenuCategoryFilter('food')">
+                  🍕 Jedzenie
+                </button>
+                <button class="filter-btn" id="adminMenuFilterDrink" onclick="setMenuCategoryFilter('drink')">
+                  🥤 Napoje
+                </button>
+              </div>
+              
               <div id="adminMenuGrid" class="menu-grid"></div>
             </div>
 

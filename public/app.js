@@ -17,6 +17,8 @@ let adminWaiterUserFilter = 'all';
 let announcementsUnsubscribe = null;
 let announcements = [];
 let readAnnouncements = [];
+let menuCategoryFilter = 'all';
+let menuSearchText = '';
 
 // ============================================
 // MENU DATA
@@ -1083,7 +1085,8 @@ function showAdminCustomerTab(tab) {
 
 function renderAdminMenu() {
     const menuGrid = document.getElementById('adminMenuGrid');
-    renderMenuGrid(menuGrid, menuItems, adminCart, toggleAdminMenuItem);
+    const filteredItems = filterMenuItems(menuItems);
+    renderMenuGrid(menuGrid, filteredItems, adminCart, toggleAdminMenuItem);
 }
 
 function toggleAdminMenuItem(item) {
@@ -1096,6 +1099,12 @@ function toggleAdminMenuItem(item) {
     }
     
     updateAdminCart();
+    
+    if (adminCart.length > 0) {
+        showScrollToCartButton();
+    } else {
+        hideScrollToCartButton();
+    }
 }
 
 function increaseAdminQuantity(itemId) {
@@ -1332,7 +1341,69 @@ function renderCustomerOrders(orderDocs) {
 
 function renderMenu() {
     const menuGrid = document.getElementById('menuGrid');
-    renderMenuGrid(menuGrid, menuItems, cart, toggleMenuItem);
+    const filteredItems = filterMenuItems(menuItems);
+    renderMenuGrid(menuGrid, filteredItems, cart, toggleMenuItem);
+}
+
+function filterMenuItems(items) {
+    let filtered = items;
+    
+    if (menuCategoryFilter !== 'all') {
+        filtered = filtered.filter(item => item.category === menuCategoryFilter);
+    }
+    
+    if (menuSearchText.trim() !== '') {
+        const searchLower = menuSearchText.toLowerCase();
+        filtered = filtered.filter(item => 
+            item.name.toLowerCase().includes(searchLower)
+        );
+    }
+    
+    return filtered;
+}
+
+function setMenuCategoryFilter(category) {
+    menuCategoryFilter = category;
+    
+    // Przyciski w panelu klienta
+    const allBtn = document.getElementById('menuFilterAll');
+    const foodBtn = document.getElementById('menuFilterFood');
+    const drinkBtn = document.getElementById('menuFilterDrink');
+    
+    // Przyciski w panelu admina
+    const adminAllBtn = document.getElementById('adminMenuFilterAll');
+    const adminFoodBtn = document.getElementById('adminMenuFilterFood');
+    const adminDrinkBtn = document.getElementById('adminMenuFilterDrink');
+    
+    // Usuń active z obu paneli
+    if (allBtn) allBtn.classList.remove('active');
+    if (foodBtn) foodBtn.classList.remove('active');
+    if (drinkBtn) drinkBtn.classList.remove('active');
+    if (adminAllBtn) adminAllBtn.classList.remove('active');
+    if (adminFoodBtn) adminFoodBtn.classList.remove('active');
+    if (adminDrinkBtn) adminDrinkBtn.classList.remove('active');
+    
+    // Dodaj active do odpowiednich przycisków
+    if (category === 'all') {
+        if (allBtn) allBtn.classList.add('active');
+        if (adminAllBtn) adminAllBtn.classList.add('active');
+    } else if (category === 'food') {
+        if (foodBtn) foodBtn.classList.add('active');
+        if (adminFoodBtn) adminFoodBtn.classList.add('active');
+    } else if (category === 'drink') {
+        if (drinkBtn) drinkBtn.classList.add('active');
+        if (adminDrinkBtn) adminDrinkBtn.classList.add('active');
+    }
+    
+    // Renderuj oba widoki (tylko jeden będzie widoczny)
+    renderMenu();
+    renderAdminMenu();
+}
+
+function setMenuSearchText(text) {
+    menuSearchText = text;
+    renderMenu();
+    renderAdminMenu();
 }
 
 function toggleMenuItem(item) {
