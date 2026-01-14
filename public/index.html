@@ -249,7 +249,14 @@
 
       .orders-list {
         display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 16px;
+      }
+
+      @media (max-width: 768px) {
+        .orders-list {
+          grid-template-columns: 1fr;
+        }
       }
 
       .order-card {
