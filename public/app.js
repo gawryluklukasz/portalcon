@@ -1214,16 +1214,19 @@ function updateAdminCart() {
 }
 
 async function placeOrderAsAdmin() {
-    if (!kitchenOpen) {
-        alert('🔴 Kuchnia jest obecnie zamknięta.');
-        return;
-    }
-    
     const note = document.getElementById('adminOrderNote').value.trim();
     
     if (adminCart.length === 0) {
         alert('Koszyk jest pusty!');
         return;
+    }
+    
+    if (!kitchenOpen) {
+        const hasFoodItems = adminCart.some(item => item.category === 'food');
+        if (hasFoodItems) {
+            alert('🔴 Kuchnia jest zamknięta. Możesz zamawiać tylko napoje.');
+            return;
+        }
     }
     
     try {
@@ -1584,16 +1587,19 @@ function updateCart() {
 }
 
 async function placeOrder() {
-    if (!kitchenOpen) {
-        alert('🔴 Kuchnia jest obecnie zamknięta.');
-        return;
-    }
-    
     const note = document.getElementById('orderNote').value.trim();
     
     if (cart.length === 0) {
         alert('Koszyk jest pusty!');
         return;
+    }
+    
+    if (!kitchenOpen) {
+        const hasFoodItems = cart.some(item => item.category === 'food');
+        if (hasFoodItems) {
+            alert('🔴 Kuchnia jest zamknięta. Możesz zamawiać tylko napoje.');
+            return;
+        }
     }
     
     try {
