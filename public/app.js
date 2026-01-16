@@ -19,6 +19,38 @@ let announcements = [];
 let readAnnouncements = [];
 let menuCategoryFilter = 'all';
 let menuSearchText = '';
+let knownOrderIds = new Set();
+let isFirstLoad = true;
+let adminKnownOrderIds = new Set();
+let isAdminFirstLoad = true;
+
+// ============================================
+// NOTIFICATION SOUND
+// ============================================
+function playNotificationSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+        
+        console.log('Notification sound played');
+    } catch (error) {
+        console.error('Error playing notification sound:', error);
+    }
+}
 
 // ============================================
 // MENU DATA
@@ -1267,6 +1299,23 @@ function loadAdminWaiterOrders() {
         .orderBy('createdAt', 'asc')
         .onSnapshot((snapshot) => {
             const docs = snapshot.docs.filter(doc => !doc.data().archived);
+            
+            if (!isAdminFirstLoad) {
+                docs.forEach(doc => {
+                    if (!adminKnownOrderIds.has(doc.id) && doc.data().status === 'pending') {
+                        console.log('New order detected (admin):', doc.id);
+                        playNotificationSound();
+                    }
+                });
+            }
+            
+            if (isAdminFirstLoad) {
+                isAdminFirstLoad = false;
+            }
+            
+            adminKnownOrderIds.clear();
+            docs.forEach(doc => adminKnownOrderIds.add(doc.id));
+            
             renderAdminWaiterOrders(docs);
         });
 }
@@ -1595,6 +1644,23 @@ function loadOrders() {
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
             const docs = snapshot.docs.filter(doc => !doc.data().archived);
+            
+            if (!isFirstLoad) {
+                docs.forEach(doc => {
+                    if (!knownOrderIds.has(doc.id) && doc.data().status === 'pending') {
+                        console.log('New order detected:', doc.id);
+                        playNotificationSound();
+                    }
+                });
+            }
+            
+            if (isFirstLoad) {
+                isFirstLoad = false;
+            }
+            
+            knownOrderIds.clear();
+            docs.forEach(doc => knownOrderIds.add(doc.id));
+            
             renderOrders(docs);
         });
 }

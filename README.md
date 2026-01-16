@@ -22,7 +22,8 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 
 ### Dla Kelnerów
 - 👀 Podgląd wszystkich zamówień w czasie rzeczywistym
-- 🔍 Filtrowanie zamówień po statusie (wszystkie, oczekujące, przyjęte, gotowe)
+- � Automatyczne powiadomienie dźwiękowe przy nowym zamówieniu
+- � Filtrowanie zamówień po statusie (wszystkie, oczekujące, przyjęte, gotowe)
 - 👤 Filtrowanie zamówień po użytkowniku (dropdown z listą klientów)
 - ✅ Przyjmowanie zamówień (zmiana statusu na "przyjęte")
 - 🎉 Oznaczanie zamówień jako "gotowe do odbioru"
@@ -33,6 +34,7 @@ System zamówień restauracyjnych z logowaniem przez Google, oddzielnymi widokam
 - 🔄 Przełączanie między widokiem klienta i kelnera
 - 🍽️ Składanie zamówień jako klient
 - 👨‍🍳 Zarządzanie wszystkimi zamówieniami jako kelner
+- 🔔 Automatyczne powiadomienie dźwiękowe przy nowym zamówieniu (w widoku kelnera)
 - � Archiwizacja zamówień (ukrywa je ze wszystkich list)
 - ↩️ Przeglądanie i przywracanie zarchiwizowanych zamówień
 - � Tworzenie i zarządzanie komunikatami dla wszystkich użytkowników
