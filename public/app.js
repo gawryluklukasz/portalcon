@@ -916,6 +916,8 @@ function createOrderCard(order, orderId, options = {}) {
         `;
     }
     
+    const totalHtml = `<div style="font-weight: 700; color: #10b981; font-size: 18px;">Suma: ${order.total.toFixed(2)} zł</div>`;
+    
     let actionButton = '';
     if (showArchived) {
         actionButton = `<button class="btn btn-primary" style="width: auto; padding: 8px 16px;" onclick="restoreOrder('${orderId}')">↩️ Przywróć</button>`;
@@ -927,8 +929,6 @@ function createOrderCard(order, orderId, options = {}) {
         } else if (order.status === 'ready') {
             actionButton = `<button class="btn" style="width: auto; padding: 8px 16px; background: #6b7280; color: white;" onclick="archiveOrder('${orderId}')">📦 Archiwizuj</button>`;
         }
-    } else {
-        actionButton = `<div style="font-weight: 700; color: #10b981;">${order.total.toFixed(2)} zł</div>`;
     }
     
     const displayNumber = order.number || orderId.substring(0, 6);
@@ -943,7 +943,8 @@ function createOrderCard(order, orderId, options = {}) {
             ${itemsHtml}
             ${noteHtml}
         </div>
-        <div class="order-footer">
+        <div class="order-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            ${totalHtml}
             ${actionButton}
         </div>
     `;
